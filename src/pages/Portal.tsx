@@ -462,6 +462,7 @@ const SummaryCard = ({ forecastConfig, setForecastConfig }: { forecastConfig: Fo
     0,
   );
   const paidOut = portfolioDeals.reduce((sum, deal) => sum + (deal.paidOut || 0), 0);
+  const projectedPortfolioValue = totalInvested + paidOut + projectedIncome;
   const projectedReturn = totalInvested > 0 ? (projectedIncome / totalInvested) * 100 : 0;
 
   return (
@@ -469,10 +470,10 @@ const SummaryCard = ({ forecastConfig, setForecastConfig }: { forecastConfig: Fo
     <div className="absolute top-[-20%] right-[-10%] w-64 h-64 bg-emerald-500/10 rounded-full blur-3xl group-hover:bg-emerald-500/20 transition-all duration-700"></div>
     <div className="z-10">
       <div className="flex justify-between items-start mb-2">
-        <h2 className="text-xs uppercase tracking-widest opacity-60 font-semibold italic">Общий портфель</h2>
+        <h2 className="text-xs uppercase tracking-widest opacity-60 font-semibold italic">Прогнозная стоимость портфеля</h2>
         <TrendingUp size={16} className="text-emerald-400" />
       </div>
-      <p className="text-4xl lg:text-5xl font-light tabular-nums leading-tight">{formatRub(totalInvested)}</p>
+      <p className="text-4xl lg:text-5xl font-light tabular-nums leading-tight">{formatRub(projectedPortfolioValue)}</p>
       <p className="text-emerald-400 text-xs mt-2 font-medium flex items-center gap-1">
         <ArrowUpRight size={14} /> {formatSignedRub(projectedIncome)} ({projectedReturn.toFixed(1)}%) <span className="opacity-60 font-normal">прогноз {getForecastLabel(forecastConfig)}</span>
       </p>
@@ -480,12 +481,20 @@ const SummaryCard = ({ forecastConfig, setForecastConfig }: { forecastConfig: Fo
     </div>
     <div className="grid grid-cols-2 gap-4 mt-6 border-t border-white/10 pt-4 z-10">
       <div>
-        <p className="text-[10px] uppercase opacity-50 mb-1">Фактически выплачено</p>
-        <p className="text-lg font-semibold tabular-nums">{formatRub(paidOut)}</p>
+        <p className="text-[10px] uppercase opacity-50 mb-1">Вложено</p>
+        <p className="text-lg font-semibold tabular-nums">{formatRub(totalInvested)}</p>
       </div>
       <div>
         <p className="text-[10px] uppercase opacity-50 mb-1">Ожидается ({getForecastLabel(forecastConfig)})</p>
         <p className="text-lg font-semibold tabular-nums">{formatRub(projectedIncome)}</p>
+      </div>
+      <div>
+        <p className="text-[10px] uppercase opacity-50 mb-1">Фактически выплачено</p>
+        <p className="text-lg font-semibold tabular-nums">{formatRub(paidOut)}</p>
+      </div>
+      <div>
+        <p className="text-[10px] uppercase opacity-50 mb-1">Формула</p>
+        <p className="text-[10px] font-bold text-white/60 uppercase tracking-wider">Вложено + факт + прогноз</p>
       </div>
     </div>
   </section>
