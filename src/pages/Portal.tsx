@@ -333,6 +333,13 @@ const parsePercent = (value?: string) => {
   return Number.isFinite(parsed) ? parsed : 0;
 };
 
+const parseMoney = (value?: number | string) => {
+  const parsed = Number(String(value || '0').replace(',', '.').replace(/\s/g, ''));
+  return Number.isFinite(parsed) ? parsed : 0;
+};
+
+const formatSignedRub = (value: number) => `${value >= 0 ? '+' : '-'}${formatRub(Math.abs(value))}`;
+
 const getInvestedDeals = (deals: Deal[]) => deals.filter(deal => (deal.invested || 0) > 0);
 
 const SummaryCard = () => {
@@ -340,7 +347,7 @@ const SummaryCard = () => {
   const portfolioDeals = getInvestedDeals(deals);
   const totalInvested = portfolioDeals.reduce((sum, deal) => sum + (deal.invested || 0), 0);
   const projectedIncome = portfolioDeals.reduce(
-    (sum, deal) => sum + (deal.invested || 0) * (parsePercent(deal.targetIrr) / 100),
+    (sum, deal) => sum + (deal.invested || 0) * (parsePercent(deal.targetIrr) / 100) - parseMoney(deal.utilities) * 12,
     0,
   );
   const paidOut = portfolioDeals.reduce((sum, deal) => sum + (deal.paidOut || 0), 0);
@@ -356,7 +363,7 @@ const SummaryCard = () => {
       </div>
       <p className="text-4xl lg:text-5xl font-light tabular-nums leading-tight">{formatRub(totalInvested)}</p>
       <p className="text-emerald-400 text-xs mt-2 font-medium flex items-center gap-1">
-        <ArrowUpRight size={14} /> +{formatRub(projectedIncome)} (+{projectedReturn.toFixed(1)}%) <span className="opacity-60 font-normal">прогнозный доход</span>
+        <ArrowUpRight size={14} /> {formatSignedRub(projectedIncome)} ({projectedReturn.toFixed(1)}%) <span className="opacity-60 font-normal">прогнозный доход</span>
       </p>
     </div>
     <div className="grid grid-cols-2 gap-4 mt-6 border-t border-white/10 pt-4 z-10">

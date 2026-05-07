@@ -9,13 +9,13 @@ export default function AdminDeals() {
   
   // State for the row currently being added or edited
   const [editFormData, setEditFormData] = useState<Deal>({
-    id: '', name: '', type: 'Стрит-ритейл', city: '', targetIrr: '', termDate: '', gracePeriod: '', utilities: '', status: 'Сбор заявок'
+    id: '', name: '', type: 'Стрит-ритейл', city: '', targetIrr: '', termDate: '', gracePeriod: '', utilities: 0, status: 'Сбор заявок'
   });
 
   const handleAddClick = () => {
     const newId = Date.now().toString();
     setEditingId(newId);
-    setEditFormData({ id: newId, name: '', type: 'Стрит-ритейл', city: '', targetIrr: '', termDate: '', gracePeriod: '', utilities: '', status: 'Сбор заявок' });
+    setEditFormData({ id: newId, name: '', type: 'Стрит-ритейл', city: '', targetIrr: '', termDate: '', gracePeriod: '', utilities: 0, status: 'Сбор заявок' });
   };
 
   const handleEditClick = (deal: Deal) => {
@@ -40,8 +40,13 @@ export default function AdminDeals() {
     const { name, value } = e.target;
     setEditFormData({ 
       ...editFormData, 
-      [name]: name === 'invested' ? Number(value) : value 
+      [name]: name === 'invested' || name === 'utilities' ? Number(value) || 0 : value 
     });
+  };
+
+  const formatRub = (value?: number | string) => {
+    const amount = Number(value) || 0;
+    return amount > 0 ? amount.toLocaleString('ru-RU') : '0';
   };
 
   return (
@@ -68,12 +73,12 @@ export default function AdminDeals() {
                 <th className="p-4 w-[250px]">Название объекта</th>
                 <th className="p-4 w-[180px]">Тип актива</th>
                 <th className="p-4 w-[150px]">Локация</th>
+                <th className="p-4 w-[120px]">Вложено (₽)</th>
+                <th className="p-4 w-[150px]">Статус</th>
                 <th className="p-4 w-[120px]">IRR (%)</th>
                 <th className="p-4 w-[150px]">Срок (Дата)</th>
                 <th className="p-4 w-[120px]">Каникулы</th>
-                <th className="p-4 w-[150px]">Коммуналка</th>
-                <th className="p-4 w-[120px]">Вложено (₽)</th>
-                <th className="p-4 w-[150px]">Статус</th>
+                <th className="p-4 w-[150px]">Коммуналка (₽/мес)</th>
                 <th className="p-4 w-[120px] text-right">Действия</th>
               </tr>
             </thead>
@@ -111,16 +116,16 @@ export default function AdminDeals() {
                       <td className="p-4 font-bold text-slate-900">{deal.name}</td>
                       <td className="p-4 text-slate-600">{deal.type}</td>
                       <td className="p-4 text-slate-600">{deal.city}</td>
-                      <td className="p-4 text-emerald-600 font-bold">{deal.targetIrr}</td>
-                      <td className="p-4 text-slate-600">{deal.termDate}</td>
-                      <td className="p-4 text-slate-600">{deal.gracePeriod || '-'}</td>
-                      <td className="p-4 text-slate-600">{deal.utilities || '-'}</td>
-                      <td className="p-4 text-slate-900 font-mono font-bold">{deal.invested ? deal.invested.toLocaleString() : '0'}</td>
+                      <td className="p-4 text-slate-900 font-mono font-bold">{deal.invested ? deal.invested.toLocaleString('ru-RU') : '0'}</td>
                       <td className="p-4">
                         <span className={`px-2.5 py-1 rounded-md text-[10px] font-bold uppercase bg-slate-100 text-slate-700`}>
                           {deal.status}
                         </span>
                       </td>
+                      <td className="p-4 text-emerald-600 font-bold">{deal.targetIrr}</td>
+                      <td className="p-4 text-slate-600">{deal.termDate}</td>
+                      <td className="p-4 text-slate-600">{deal.gracePeriod || '-'}</td>
+                      <td className="p-4 text-slate-600 font-mono">{formatRub(deal.utilities)}</td>
                       <td className="p-4 text-right">
                         <div className="flex items-center justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
                           <button onClick={() => handleEditClick(deal)} className="p-2 text-slate-400 hover:text-blue-500 hover:bg-blue-50 rounded-lg transition-all">
@@ -138,7 +143,7 @@ export default function AdminDeals() {
               
               {deals.length === 0 && !editingId && (
                 <tr>
-                  <td colSpan={8} className="p-12 text-center text-slate-400 font-medium italic">
+                  <td colSpan={10} className="p-12 text-center text-slate-400 font-medium italic">
                     Сделок пока нет. Нажмите «Создать сделку».
                   </td>
                 </tr>
@@ -188,32 +193,6 @@ function EditableRow({ formData, onChange, onSave, onCancel, isNew }: any) {
       </td>
       <td className="p-2">
         <input 
-          name="targetIrr" value={formData.targetIrr} onChange={onChange}
-          placeholder="%"
-          className="w-full bg-slate-50 border border-slate-200 rounded-lg px-3 py-2 text-sm font-bold text-emerald-600 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 transition-all"
-        />
-      </td>
-      <td className="p-2">
-        <input 
-          name="termDate" value={formData.termDate || ''} onChange={onChange} type="date"
-          className="w-full bg-slate-50 border border-slate-200 rounded-lg px-3 py-2 text-sm font-bold text-slate-900 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 transition-all"
-        />
-      </td>
-      <td className="p-2">
-        <input 
-          name="gracePeriod" value={formData.gracePeriod || ''} onChange={onChange} type="date"
-          className="w-full bg-slate-50 border border-slate-200 rounded-lg px-3 py-2 text-sm font-bold text-slate-900 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 transition-all"
-        />
-      </td>
-      <td className="p-2">
-        <input 
-          name="utilities" value={formData.utilities || ''} onChange={onChange}
-          placeholder="Текст..."
-          className="w-full bg-slate-50 border border-slate-200 rounded-lg px-3 py-2 text-sm font-bold text-slate-900 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 transition-all"
-        />
-      </td>
-      <td className="p-2">
-        <input 
           name="invested" value={formData.invested || ''} onChange={onChange}
           placeholder="Вложено" type="number"
           className="w-full bg-slate-50 border border-slate-200 rounded-lg px-3 py-2 text-sm font-bold text-slate-900 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 transition-all"
@@ -235,6 +214,32 @@ function EditableRow({ formData, onChange, onSave, onCancel, isNew }: any) {
           <option value="Закрыта">Закрыта</option>
           <option value="Рассматривается">Рассматривается</option>
         </select>
+      </td>
+      <td className="p-2">
+        <input 
+          name="targetIrr" value={formData.targetIrr} onChange={onChange}
+          placeholder="%"
+          className="w-full bg-slate-50 border border-slate-200 rounded-lg px-3 py-2 text-sm font-bold text-emerald-600 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 transition-all"
+        />
+      </td>
+      <td className="p-2">
+        <input 
+          name="termDate" value={formData.termDate || ''} onChange={onChange} type="date"
+          className="w-full bg-slate-50 border border-slate-200 rounded-lg px-3 py-2 text-sm font-bold text-slate-900 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 transition-all"
+        />
+      </td>
+      <td className="p-2">
+        <input 
+          name="gracePeriod" value={formData.gracePeriod || ''} onChange={onChange} type="date"
+          className="w-full bg-slate-50 border border-slate-200 rounded-lg px-3 py-2 text-sm font-bold text-slate-900 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 transition-all"
+        />
+      </td>
+      <td className="p-2">
+        <input 
+          name="utilities" value={formData.utilities || ''} onChange={onChange}
+          placeholder="₽/мес" type="number"
+          className="w-full bg-slate-50 border border-slate-200 rounded-lg px-3 py-2 text-sm font-bold text-slate-900 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 transition-all"
+        />
       </td>
       <td className="p-2 text-right">
         <div className="flex items-center justify-end gap-1">

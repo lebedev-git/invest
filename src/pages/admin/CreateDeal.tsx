@@ -12,7 +12,7 @@ export default function CreateDeal() {
     name: '',
     type: 'Стрит-ритейл',
     city: '',
-    status: 'Сбор',
+    status: 'Сбор заявок',
     targetIrr: '',
     termDate: '',
     gracePeriod: '',
@@ -37,7 +37,7 @@ export default function CreateDeal() {
       targetIrr: formData.targetIrr || '0',
       termDate: formData.termDate,
       gracePeriod: formData.gracePeriod,
-      utilities: formData.utilities,
+      utilities: Number(formData.utilities) || 0,
       description: formData.description,
       strategy: formData.strategy,
       invested: Number(formData.invested) || 0,
@@ -164,11 +164,11 @@ export default function CreateDeal() {
               </div>
 
               <div className="flex flex-col gap-2">
-                <label className="text-[10px] font-black uppercase tracking-widest text-slate-400">Коммуналка</label>
+                <label className="text-[10px] font-black uppercase tracking-widest text-slate-400">Коммуналка (₽/мес)</label>
                 <input 
-                  name="utilities" value={formData.utilities} onChange={handleChange}
-                  placeholder="По счетчикам"
-                  className="w-full bg-slate-50 border border-slate-100 rounded-xl px-4 py-3 text-sm font-bold text-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all placeholder:text-slate-300"
+                  name="utilities" value={formData.utilities} onChange={handleChange} type="number"
+                  placeholder="0"
+                  className="w-full bg-slate-50 border border-slate-100 rounded-xl px-4 py-3 text-sm font-bold text-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all font-mono placeholder:text-slate-300 placeholder:font-sans"
                 />
               </div>
             </div>

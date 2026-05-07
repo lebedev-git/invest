@@ -10,7 +10,7 @@ export interface Deal {
   targetIrr: string;
   termDate: string; // Changed from termMonths
   gracePeriod?: string; // New: Каникулы
-  utilities?: string; // New: Коммуналка
+  utilities?: number | string; // Коммуналка в рублях в месяц
   status: DealStatus | string;
   invested?: number; 
   share?: number;
@@ -20,10 +20,10 @@ export interface Deal {
 }
 
 const INITIAL_DEALS: Deal[] = [
-  { id: '1', name: 'Street Retail «Октябрь»', type: 'Стрит-ритейл', city: 'Москва', targetIrr: '12.5', termDate: '2025-12-01', gracePeriod: '2025-01-01', utilities: 'По счетчикам', status: 'Аренда', invested: 5000000, share: 0.15 },
-  { id: '2', name: 'Self Storage «Восток»', type: 'Склад', city: 'Казань', targetIrr: '24.0', termDate: '2026-06-01', gracePeriod: '', utilities: '', status: 'Стройка', invested: 4200000, share: 0.08 },
-  { id: '3', name: 'Редевелопмент Loft Yard', type: 'Редевелопмент', city: 'СПБ', targetIrr: '0', termDate: '2025-12-31', gracePeriod: '', utilities: 'Включены', status: 'Ремонт', invested: 3250000, share: 0.12 },
-  { id: '4', name: 'ГАБ «Пятерочка»', type: 'ГАБ', city: 'Екатеринбург', targetIrr: '10.8', termDate: '2027-11-15', gracePeriod: '', utilities: 'Оплачивает арендатор', status: 'Аренда', invested: 7000000, share: 0.05 },
+  { id: '1', name: 'Street Retail «Октябрь»', type: 'Стрит-ритейл', city: 'Москва', targetIrr: '12.5', termDate: '2025-12-01', gracePeriod: '2025-01-01', utilities: 0, status: 'Аренда', invested: 5000000, share: 0.15 },
+  { id: '2', name: 'Self Storage «Восток»', type: 'Склад', city: 'Казань', targetIrr: '24.0', termDate: '2026-06-01', gracePeriod: '', utilities: 0, status: 'Стройка', invested: 4200000, share: 0.08 },
+  { id: '3', name: 'Редевелопмент Loft Yard', type: 'Редевелопмент', city: 'СПБ', targetIrr: '0', termDate: '2025-12-31', gracePeriod: '', utilities: 0, status: 'Ремонт', invested: 3250000, share: 0.12 },
+  { id: '4', name: 'ГАБ «Пятерочка»', type: 'ГАБ', city: 'Екатеринбург', targetIrr: '10.8', termDate: '2027-11-15', gracePeriod: '', utilities: 0, status: 'Аренда', invested: 7000000, share: 0.05 },
 ];
 
 interface DealContextType {
