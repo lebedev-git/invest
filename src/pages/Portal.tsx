@@ -13,7 +13,6 @@ import {
   ArrowUpRight, 
   Info,
   ChevronRight,
-  Download,
   PieChart,
   Activity,
   User
@@ -252,23 +251,6 @@ const ProfilePage = () => {
   );
 };
 
-const PortfolioPage = () => (
-  <AnimatePresence mode="wait">
-    <motion.div 
-      initial={{ opacity: 0, y: 10 }}
-      animate={{ opacity: 1, y: 0 }}
-      exit={{ opacity: 0, y: -10 }}
-      className="grid grid-cols-12 auto-rows-min gap-6"
-    >
-      <SummaryCard />
-      <AssetAllocation />
-      <PaymentsCalendar />
-      <ProjectsTable />
-      <NewsFeed />
-    </motion.div>
-  </AnimatePresence>
-);
-
 const NewProjectsPage = () => {
   const { deals } = useDeals();
   const activeDeals = deals.filter((d: any) => d.status === 'Сбор' || d.status === 'Сбор заявок' || d.status === 'Рассматривается');
@@ -328,6 +310,13 @@ const NewProjectsPage = () => {
 
 const formatRub = (value: number) => `${Math.round(value).toLocaleString('ru-RU')} ₽`;
 
+type ForecastMode = 'year-end' | 'deal-end' | 'custom';
+
+interface ForecastConfig {
+  mode: ForecastMode;
+  customDate: string;
+}
+
 const parsePercent = (value?: string) => {
   const parsed = Number(String(value || '0').replace(',', '.'));
   return Number.isFinite(parsed) ? parsed : 0;
@@ -342,12 +331,123 @@ const formatSignedRub = (value: number) => `${value >= 0 ? '+' : '-'}${formatRub
 
 const getInvestedDeals = (deals: Deal[]) => deals.filter(deal => (deal.invested || 0) > 0);
 
-const SummaryCard = () => {
+const getToday = () => {
+  const now = new Date();
+  now.setHours(0, 0, 0, 0);
+  return now;
+};
+
+const getDefaultForecastDate = () => {
+  const today = getToday();
+  return `${today.getFullYear()}-12-31`;
+};
+
+const getForecastTargetDate = (config: ForecastConfig, deal?: Deal) => {
+  const today = getToday();
+  if (config.mode === 'deal-end' && deal?.termDate) {
+    const dealEndDate = new Date(deal.termDate);
+    if (!Number.isNaN(dealEndDate.getTime())) return dealEndDate;
+  }
+
+  let targetDate: Date;
+  if (config.mode === 'custom' && config.customDate) {
+    const customDate = new Date(config.customDate);
+    targetDate = Number.isNaN(customDate.getTime()) ? new Date(today.getFullYear(), 11, 31) : customDate;
+  } else {
+    targetDate = new Date(today.getFullYear(), 11, 31);
+  }
+
+  if (deal?.termDate) {
+    const dealEndDate = new Date(deal.termDate);
+    if (!Number.isNaN(dealEndDate.getTime()) && dealEndDate < targetDate) return dealEndDate;
+  }
+
+  return targetDate;
+};
+
+const getForecastDays = (config: ForecastConfig, deal?: Deal) => {
+  const today = getToday();
+  const targetDate = getForecastTargetDate(config, deal);
+  targetDate.setHours(0, 0, 0, 0);
+  return Math.max(0, Math.ceil((targetDate.getTime() - today.getTime()) / 86400000));
+};
+
+const getAnnualProjectedIncome = (deal: Deal) => {
+  return (deal.invested || 0) * (parsePercent(deal.targetIrr) / 100) - parseMoney(deal.utilities) * 12;
+};
+
+const getProjectedIncome = (deal: Deal, config: ForecastConfig) => {
+  const annualProjectedIncome = getAnnualProjectedIncome(deal);
+  return annualProjectedIncome * (getForecastDays(config, deal) / 365);
+};
+
+const getForecastLabel = (config: ForecastConfig) => {
+  if (config.mode === 'year-end') return 'до конца года';
+  if (config.mode === 'deal-end') return 'до конца сделки';
+  return 'на выбранную дату';
+};
+
+const ForecastControls = ({ config, onChange }: { config: ForecastConfig; onChange: (config: ForecastConfig) => void }) => (
+  <div className="col-span-12 bg-white rounded-3xl border border-slate-200 shadow-sm p-4 flex flex-col lg:flex-row lg:items-center justify-between gap-4">
+    <div>
+      <h3 className="text-sm font-black text-slate-900 uppercase tracking-tight">Период прогноза</h3>
+      <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest mt-1">Единый фильтр для дашборда и таблицы объектов</p>
+    </div>
+    <div className="flex flex-col sm:flex-row gap-2">
+      {[
+        { id: 'year-end', label: 'До конца года' },
+        { id: 'deal-end', label: 'До конца сделки' },
+        { id: 'custom', label: 'На дату' },
+      ].map(item => (
+        <button
+          key={item.id}
+          onClick={() => onChange({ ...config, mode: item.id as ForecastMode })}
+          className={`px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest border transition-all ${config.mode === item.id ? 'bg-slate-900 text-white border-slate-900' : 'bg-white text-slate-500 border-slate-200 hover:bg-slate-50'}`}
+        >
+          {item.label}
+        </button>
+      ))}
+      <input
+        type="date"
+        value={config.customDate}
+        onChange={e => onChange({ mode: 'custom', customDate: e.target.value })}
+        className="bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-xs font-bold text-slate-900 focus:outline-none focus:ring-2 focus:ring-slate-900/5 transition-all font-mono"
+      />
+    </div>
+  </div>
+);
+
+const PortfolioPage = () => {
+  const [forecastConfig, setForecastConfig] = useState<ForecastConfig>({
+    mode: 'year-end',
+    customDate: getDefaultForecastDate(),
+  });
+
+  return (
+    <AnimatePresence mode="wait">
+      <motion.div 
+        initial={{ opacity: 0, y: 10 }}
+        animate={{ opacity: 1, y: 0 }}
+        exit={{ opacity: 0, y: -10 }}
+        className="grid grid-cols-12 auto-rows-min gap-6"
+      >
+        <ForecastControls config={forecastConfig} onChange={setForecastConfig} />
+        <SummaryCard forecastConfig={forecastConfig} />
+        <AssetAllocation />
+        <PaymentsCalendar />
+        <ProjectsTable forecastConfig={forecastConfig} />
+        <NewsFeed />
+      </motion.div>
+    </AnimatePresence>
+  );
+};
+
+const SummaryCard = ({ forecastConfig }: { forecastConfig: ForecastConfig }) => {
   const { deals } = useDeals();
   const portfolioDeals = getInvestedDeals(deals);
   const totalInvested = portfolioDeals.reduce((sum, deal) => sum + (deal.invested || 0), 0);
   const projectedIncome = portfolioDeals.reduce(
-    (sum, deal) => sum + (deal.invested || 0) * (parsePercent(deal.targetIrr) / 100) - parseMoney(deal.utilities) * 12,
+    (sum, deal) => sum + getProjectedIncome(deal, forecastConfig),
     0,
   );
   const paidOut = portfolioDeals.reduce((sum, deal) => sum + (deal.paidOut || 0), 0);
@@ -363,7 +463,7 @@ const SummaryCard = () => {
       </div>
       <p className="text-4xl lg:text-5xl font-light tabular-nums leading-tight">{formatRub(totalInvested)}</p>
       <p className="text-emerald-400 text-xs mt-2 font-medium flex items-center gap-1">
-        <ArrowUpRight size={14} /> {formatSignedRub(projectedIncome)} ({projectedReturn.toFixed(1)}%) <span className="opacity-60 font-normal">прогнозный доход</span>
+        <ArrowUpRight size={14} /> {formatSignedRub(projectedIncome)} ({projectedReturn.toFixed(1)}%) <span className="opacity-60 font-normal">прогноз {getForecastLabel(forecastConfig)}</span>
       </p>
     </div>
     <div className="grid grid-cols-2 gap-4 mt-6 border-t border-white/10 pt-4 z-10">
@@ -372,7 +472,7 @@ const SummaryCard = () => {
         <p className="text-lg font-semibold tabular-nums">{formatRub(paidOut)}</p>
       </div>
       <div>
-        <p className="text-[10px] uppercase opacity-50 mb-1">Ожидается (план)</p>
+        <p className="text-[10px] uppercase opacity-50 mb-1">Ожидается ({getForecastLabel(forecastConfig)})</p>
         <p className="text-lg font-semibold tabular-nums">{formatRub(projectedIncome)}</p>
       </div>
     </div>
@@ -380,7 +480,7 @@ const SummaryCard = () => {
   );
 };
 
-const ProjectsTable = () => {
+const ProjectsTable = ({ forecastConfig }: { forecastConfig: ForecastConfig }) => {
   const { deals } = useDeals();
   const portfolioDeals = getInvestedDeals(deals);
 
@@ -391,22 +491,26 @@ const ProjectsTable = () => {
         <Layers size={18} className="text-slate-400" />
         <h3 className="font-bold text-lg text-slate-900">Мои инвестиции в проекты</h3>
       </div>
-      <button className="text-[10px] font-bold text-slate-500 flex items-center gap-1 uppercase tracking-wider hover:bg-white px-3 py-1.5 rounded-lg border border-slate-200 transition-all">
-        <Download size={14} /> Выгрузить отчёт
-      </button>
     </div>
     <div className="flex-1 overflow-x-auto">
-      <table className="w-full text-left border-collapse min-w-[600px]">
+      <table className="w-full text-left border-collapse min-w-[920px]">
         <thead className="text-[10px] uppercase text-slate-400 font-bold bg-white sticky top-0 z-10">
           <tr className="border-b border-slate-50">
             <th className="p-6">Название / Локация</th>
             <th className="p-4 text-center">Статус</th>
+            <th className="p-4 text-right">Срок</th>
             <th className="p-4 text-right">Вложено</th>
             <th className="p-4 text-right text-slate-900">Доходность</th>
+            <th className="p-4 text-right text-slate-900">Прогноз ₽</th>
+            <th className="p-4 text-right text-slate-900">Прогноз %</th>
           </tr>
         </thead>
         <tbody className="text-sm">
-          {portfolioDeals.length > 0 ? portfolioDeals.map((project: any) => (
+          {portfolioDeals.length > 0 ? portfolioDeals.map((project: Deal) => {
+            const projectedIncome = getProjectedIncome(project, forecastConfig);
+            const projectedPercent = project.invested ? (projectedIncome / project.invested) * 100 : 0;
+
+            return (
             <motion.tr 
               key={project.id} 
               initial={{ opacity: 0 }}
@@ -426,8 +530,11 @@ const ProjectsTable = () => {
                   {project.status}
                 </span>
               </td>
+              <td className="p-4 text-right text-slate-500 whitespace-nowrap font-mono text-xs">
+                {project.termDate ? new Date(project.termDate).toLocaleDateString('ru-RU') : '—'}
+              </td>
               <td className="p-4 text-right font-medium text-slate-700 whitespace-nowrap">
-                {project.invested ? project.invested.toLocaleString() : '0'} ₽
+                {project.invested ? project.invested.toLocaleString('ru-RU') : '0'} ₽
               </td>
               <td className="p-4 text-right whitespace-nowrap">
                 <div className="flex items-center justify-end gap-6 group-hover:translate-x-1 transition-transform">
@@ -439,10 +546,17 @@ const ProjectsTable = () => {
                   <ChevronRight size={14} className="text-slate-300 opacity-0 group-hover:opacity-100 transition-opacity" />
                 </div>
               </td>
+              <td className={`p-4 text-right whitespace-nowrap font-mono font-bold ${projectedIncome >= 0 ? 'text-emerald-600' : 'text-rose-500'}`}>
+                {formatSignedRub(projectedIncome)}
+              </td>
+              <td className={`p-4 text-right whitespace-nowrap font-mono font-bold ${projectedPercent >= 0 ? 'text-slate-900' : 'text-rose-500'}`}>
+                {projectedPercent.toFixed(1)}%
+              </td>
             </motion.tr>
-          )) : (
+            );
+          }) : (
             <tr>
-              <td colSpan={4} className="p-8 text-center text-slate-400 font-medium italic text-sm border-b border-slate-50">
+              <td colSpan={7} className="p-8 text-center text-slate-400 font-medium italic text-sm border-b border-slate-50">
                 У вас пока нет активных инвестиций.
               </td>
             </tr>
