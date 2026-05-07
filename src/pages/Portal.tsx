@@ -19,7 +19,7 @@ import {
   ArrowLeft
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
-import { useDeals, Deal } from '../context/DealContext';
+import { useDeals, Deal, StatusHistoryItem } from '../context/DealContext';
 
 // Types are imported from DealContext
 
@@ -583,16 +583,13 @@ const ProjectsTable = ({ forecastConfig, onSelectProject }: { forecastConfig: Fo
 
 type ProjectHistoryFilter = 'all' | 'status' | 'finance' | 'forecast';
 
-const STATUS_FLOW = ['Сбор заявок', 'Сделка', 'Регистрация', 'Стройка', 'Ремонт', 'Поиск арендатора', 'Аренда', 'Продажа', 'Закрыта'];
-
 const buildProjectHistory = (deal: Deal) => {
-  const statusIndex = Math.max(0, STATUS_FLOW.indexOf(String(deal.status)));
-  const statusEvents = STATUS_FLOW.slice(0, statusIndex + 1).map((status, index) => ({
-    id: `status-${status}`,
+  const statusEvents = (deal.statusHistory || []).map((event: StatusHistoryItem) => ({
+    id: event.id,
     type: 'status' as ProjectHistoryFilter,
-    date: new Date(2026, Math.min(index, 11), 5).toISOString(),
-    title: status === deal.status ? `Текущий статус: ${status}` : `Статус изменен: ${status}`,
-    description: index === statusIndex ? 'Последний подтвержденный этап по объекту.' : 'Этап пройден в операционной модели сделки.',
+    date: event.date,
+    title: `Статус: ${event.status}`,
+    description: event.comment || 'Статус проекта обновлен в админ-панели.',
   }));
 
   return [
@@ -603,7 +600,13 @@ const buildProjectHistory = (deal: Deal) => {
       title: `Инвестиция зафиксирована: ${formatRub(deal.invested || 0)}`,
       description: 'Сумма участия инвестора добавлена в портфель.',
     },
-    ...statusEvents,
+    ...(statusEvents.length > 0 ? statusEvents : [{
+      id: 'status-fallback',
+      type: 'status' as ProjectHistoryFilter,
+      date: new Date().toISOString(),
+      title: `Статус: ${deal.status}`,
+      description: 'Статус зафиксирован по текущим данным сделки.',
+    }]),
     {
       id: 'forecast-updated',
       type: 'forecast' as ProjectHistoryFilter,
