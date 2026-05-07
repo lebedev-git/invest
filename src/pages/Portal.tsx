@@ -15,7 +15,8 @@ import {
   ChevronRight,
   PieChart,
   Activity,
-  User
+  User,
+  ArrowLeft
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { useDeals, Deal } from '../context/DealContext';
@@ -383,26 +384,23 @@ const getProjectedIncome = (deal: Deal, config: ForecastConfig) => {
 
 const getForecastLabel = (config: ForecastConfig) => {
   if (config.mode === 'year-end') return 'до конца года';
-  if (config.mode === 'deal-end') return 'до конца сделки';
+  if (config.mode === 'deal-end') return 'до конца сделок';
   return 'на выбранную дату';
 };
 
 const ForecastControls = ({ config, onChange }: { config: ForecastConfig; onChange: (config: ForecastConfig) => void }) => (
-  <div className="col-span-12 bg-white rounded-3xl border border-slate-200 shadow-sm p-4 flex flex-col lg:flex-row lg:items-center justify-between gap-4">
-    <div>
-      <h3 className="text-sm font-black text-slate-900 uppercase tracking-tight">Период прогноза</h3>
-      <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest mt-1">Единый фильтр для дашборда и таблицы объектов</p>
-    </div>
-    <div className="flex flex-col sm:flex-row gap-2">
+  <div className="relative z-10 mt-5 flex flex-col gap-3">
+    <p className="text-[9px] uppercase tracking-widest text-white/40 font-black">Период прогноза</p>
+    <div className="flex flex-wrap gap-2">
       {[
         { id: 'year-end', label: 'До конца года' },
-        { id: 'deal-end', label: 'До конца сделки' },
+        { id: 'deal-end', label: 'До конца сделок' },
         { id: 'custom', label: 'На дату' },
       ].map(item => (
         <button
           key={item.id}
           onClick={() => onChange({ ...config, mode: item.id as ForecastMode })}
-          className={`px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest border transition-all ${config.mode === item.id ? 'bg-slate-900 text-white border-slate-900' : 'bg-white text-slate-500 border-slate-200 hover:bg-slate-50'}`}
+          className={`px-3 py-2 rounded-xl text-[9px] font-black uppercase tracking-widest border transition-all ${config.mode === item.id ? 'bg-white text-slate-900 border-white' : 'bg-white/5 text-white/60 border-white/10 hover:bg-white/10 hover:text-white'}`}
         >
           {item.label}
         </button>
@@ -411,7 +409,7 @@ const ForecastControls = ({ config, onChange }: { config: ForecastConfig; onChan
         type="date"
         value={config.customDate}
         onChange={e => onChange({ mode: 'custom', customDate: e.target.value })}
-        className="bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-xs font-bold text-slate-900 focus:outline-none focus:ring-2 focus:ring-slate-900/5 transition-all font-mono"
+        className="bg-white/5 border border-white/10 rounded-xl px-3 py-2 text-[10px] font-bold text-white focus:outline-none focus:ring-2 focus:ring-white/10 transition-all font-mono"
       />
     </div>
   </div>
@@ -422,6 +420,20 @@ const PortfolioPage = () => {
     mode: 'year-end',
     customDate: getDefaultForecastDate(),
   });
+  const { deals } = useDeals();
+  const [selectedProjectId, setSelectedProjectId] = useState<string | null>(null);
+  const selectedProject = deals.find(deal => deal.id === selectedProjectId);
+
+  if (selectedProject) {
+    return (
+      <ProjectDetailPage
+        deal={selectedProject}
+        forecastConfig={forecastConfig}
+        setForecastConfig={setForecastConfig}
+        onBack={() => setSelectedProjectId(null)}
+      />
+    );
+  }
 
   return (
     <AnimatePresence mode="wait">
@@ -431,18 +443,17 @@ const PortfolioPage = () => {
         exit={{ opacity: 0, y: -10 }}
         className="grid grid-cols-12 auto-rows-min gap-6"
       >
-        <ForecastControls config={forecastConfig} onChange={setForecastConfig} />
-        <SummaryCard forecastConfig={forecastConfig} />
+        <SummaryCard forecastConfig={forecastConfig} setForecastConfig={setForecastConfig} />
         <AssetAllocation />
         <PaymentsCalendar />
-        <ProjectsTable forecastConfig={forecastConfig} />
+        <ProjectsTable forecastConfig={forecastConfig} onSelectProject={setSelectedProjectId} />
         <NewsFeed />
       </motion.div>
     </AnimatePresence>
   );
 };
 
-const SummaryCard = ({ forecastConfig }: { forecastConfig: ForecastConfig }) => {
+const SummaryCard = ({ forecastConfig, setForecastConfig }: { forecastConfig: ForecastConfig; setForecastConfig: (config: ForecastConfig) => void }) => {
   const { deals } = useDeals();
   const portfolioDeals = getInvestedDeals(deals);
   const totalInvested = portfolioDeals.reduce((sum, deal) => sum + (deal.invested || 0), 0);
@@ -465,6 +476,7 @@ const SummaryCard = ({ forecastConfig }: { forecastConfig: ForecastConfig }) => 
       <p className="text-emerald-400 text-xs mt-2 font-medium flex items-center gap-1">
         <ArrowUpRight size={14} /> {formatSignedRub(projectedIncome)} ({projectedReturn.toFixed(1)}%) <span className="opacity-60 font-normal">прогноз {getForecastLabel(forecastConfig)}</span>
       </p>
+      <ForecastControls config={forecastConfig} onChange={setForecastConfig} />
     </div>
     <div className="grid grid-cols-2 gap-4 mt-6 border-t border-white/10 pt-4 z-10">
       <div>
@@ -480,7 +492,7 @@ const SummaryCard = ({ forecastConfig }: { forecastConfig: ForecastConfig }) => 
   );
 };
 
-const ProjectsTable = ({ forecastConfig }: { forecastConfig: ForecastConfig }) => {
+const ProjectsTable = ({ forecastConfig, onSelectProject }: { forecastConfig: ForecastConfig; onSelectProject: (id: string) => void }) => {
   const { deals } = useDeals();
   const portfolioDeals = getInvestedDeals(deals);
 
@@ -515,6 +527,7 @@ const ProjectsTable = ({ forecastConfig }: { forecastConfig: ForecastConfig }) =
               key={project.id} 
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
+              onClick={() => onSelectProject(project.id)}
               className="border-b border-slate-50 hover:bg-slate-50 transition-colors group cursor-pointer"
             >
               <td className="p-6">
@@ -565,6 +578,158 @@ const ProjectsTable = ({ forecastConfig }: { forecastConfig: ForecastConfig }) =
       </table>
     </div>
   </section>
+  );
+};
+
+type ProjectHistoryFilter = 'all' | 'status' | 'finance' | 'forecast';
+
+const STATUS_FLOW = ['Сбор заявок', 'Сделка', 'Регистрация', 'Стройка', 'Ремонт', 'Поиск арендатора', 'Аренда', 'Продажа', 'Закрыта'];
+
+const buildProjectHistory = (deal: Deal) => {
+  const statusIndex = Math.max(0, STATUS_FLOW.indexOf(String(deal.status)));
+  const statusEvents = STATUS_FLOW.slice(0, statusIndex + 1).map((status, index) => ({
+    id: `status-${status}`,
+    type: 'status' as ProjectHistoryFilter,
+    date: new Date(2026, Math.min(index, 11), 5).toISOString(),
+    title: status === deal.status ? `Текущий статус: ${status}` : `Статус изменен: ${status}`,
+    description: index === statusIndex ? 'Последний подтвержденный этап по объекту.' : 'Этап пройден в операционной модели сделки.',
+  }));
+
+  return [
+    {
+      id: 'finance-invested',
+      type: 'finance' as ProjectHistoryFilter,
+      date: new Date(2026, 0, 15).toISOString(),
+      title: `Инвестиция зафиксирована: ${formatRub(deal.invested || 0)}`,
+      description: 'Сумма участия инвестора добавлена в портфель.',
+    },
+    ...statusEvents,
+    {
+      id: 'forecast-updated',
+      type: 'forecast' as ProjectHistoryFilter,
+      date: new Date().toISOString(),
+      title: 'Прогноз пересчитан',
+      description: 'Прогноз считается из вложенной суммы, IRR, коммуналки и выбранного периода.',
+    },
+  ].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+};
+
+const ProjectDetailPage = ({ deal, forecastConfig, setForecastConfig, onBack }: {
+  deal: Deal;
+  forecastConfig: ForecastConfig;
+  setForecastConfig: (config: ForecastConfig) => void;
+  onBack: () => void;
+}) => {
+  const [historyFilter, setHistoryFilter] = useState<ProjectHistoryFilter>('all');
+  const projectedIncome = getProjectedIncome(deal, forecastConfig);
+  const projectedPercent = deal.invested ? (projectedIncome / deal.invested) * 100 : 0;
+  const annualProjectedIncome = getAnnualProjectedIncome(deal);
+  const history = buildProjectHistory(deal).filter(event => historyFilter === 'all' || event.type === historyFilter);
+
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 10 }}
+      animate={{ opacity: 1, y: 0 }}
+      className="flex flex-col gap-6"
+    >
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+        <button
+          onClick={onBack}
+          className="flex items-center gap-2 text-[10px] font-black uppercase tracking-widest text-slate-500 hover:text-slate-900 transition-all w-fit"
+        >
+          <ArrowLeft size={16} /> Назад к портфелю
+        </button>
+        <span className={`px-3 py-1.5 rounded-lg text-[10px] font-black uppercase w-fit ${STATUS_COLORS[deal.status] || 'bg-slate-100 text-slate-700'}`}>
+          {deal.status}
+        </span>
+      </div>
+
+      <section className="bg-slate-900 text-white rounded-3xl p-8 shadow-lg relative overflow-hidden">
+        <div className="absolute top-[-20%] right-[-10%] w-80 h-80 bg-emerald-500/10 rounded-full blur-3xl"></div>
+        <div className="relative z-10 grid grid-cols-1 xl:grid-cols-[1.2fr_1fr] gap-8">
+          <div>
+            <p className="text-[10px] uppercase tracking-widest text-white/40 font-black mb-2">{deal.type} • {deal.city}</p>
+            <h2 className="text-3xl lg:text-4xl font-black tracking-tight leading-tight">{deal.name}</h2>
+            <p className="text-sm text-white/50 mt-3 max-w-2xl">{deal.description || deal.strategy || 'Описание объекта будет добавлено инвестиционным комитетом.'}</p>
+            <ForecastControls config={forecastConfig} onChange={setForecastConfig} />
+          </div>
+
+          <div className="grid grid-cols-2 gap-4 content-start">
+            <div className="border border-white/10 rounded-2xl p-4 bg-white/5">
+              <p className="text-[9px] uppercase text-white/40 font-black mb-1">Вложено</p>
+              <p className="text-xl font-semibold tabular-nums">{formatRub(deal.invested || 0)}</p>
+            </div>
+            <div className="border border-white/10 rounded-2xl p-4 bg-white/5">
+              <p className="text-[9px] uppercase text-white/40 font-black mb-1">Фактически выплачено</p>
+              <p className="text-xl font-semibold tabular-nums">{formatRub(deal.paidOut || 0)}</p>
+            </div>
+            <div className="border border-white/10 rounded-2xl p-4 bg-white/5">
+              <p className="text-[9px] uppercase text-white/40 font-black mb-1">Прогноз ₽</p>
+              <p className={`text-xl font-semibold tabular-nums ${projectedIncome >= 0 ? 'text-emerald-400' : 'text-rose-300'}`}>{formatSignedRub(projectedIncome)}</p>
+            </div>
+            <div className="border border-white/10 rounded-2xl p-4 bg-white/5">
+              <p className="text-[9px] uppercase text-white/40 font-black mb-1">Прогноз %</p>
+              <p className={`text-xl font-semibold tabular-nums ${projectedPercent >= 0 ? 'text-white' : 'text-rose-300'}`}>{projectedPercent.toFixed(1)}%</p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <section className="lg:col-span-1 bg-white rounded-3xl border border-slate-200 shadow-sm p-6">
+          <h3 className="font-black text-slate-900 uppercase tracking-tight text-sm mb-5">Параметры объекта</h3>
+          {[
+            ['IRR', `${deal.targetIrr || 0}%`],
+            ['Годовой прогноз', formatSignedRub(annualProjectedIncome)],
+            ['Срок сделки', deal.termDate ? new Date(deal.termDate).toLocaleDateString('ru-RU') : 'Не указан'],
+            ['Каникулы', deal.gracePeriod ? new Date(deal.gracePeriod).toLocaleDateString('ru-RU') : 'Нет'],
+            ['Коммуналка', `${formatRub(parseMoney(deal.utilities))} / мес`],
+          ].map(([label, value]) => (
+            <div key={label} className="flex items-center justify-between py-3 border-b border-slate-100 last:border-0">
+              <span className="text-[10px] uppercase tracking-widest text-slate-400 font-black">{label}</span>
+              <span className="text-sm font-bold text-slate-900 text-right">{value}</span>
+            </div>
+          ))}
+        </section>
+
+        <section className="lg:col-span-2 bg-white rounded-3xl border border-slate-200 shadow-sm p-6">
+          <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6">
+            <h3 className="font-black text-slate-900 uppercase tracking-tight text-sm">История проекта</h3>
+            <div className="flex flex-wrap gap-2">
+              {[
+                { id: 'all', label: 'Все' },
+                { id: 'status', label: 'Статусы' },
+                { id: 'finance', label: 'Финансы' },
+                { id: 'forecast', label: 'Прогноз' },
+              ].map(item => (
+                <button
+                  key={item.id}
+                  onClick={() => setHistoryFilter(item.id as ProjectHistoryFilter)}
+                  className={`px-3 py-2 rounded-lg text-[9px] font-black uppercase tracking-widest border transition-all ${historyFilter === item.id ? 'bg-slate-900 text-white border-slate-900' : 'bg-white text-slate-500 border-slate-200 hover:bg-slate-50'}`}
+                >
+                  {item.label}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          <div className="space-y-4">
+            {history.map(event => (
+              <div key={event.id} className="grid grid-cols-[88px_1fr] gap-4 group">
+                <div className="text-[10px] font-bold text-slate-400 uppercase pt-1">
+                  {new Date(event.date).toLocaleDateString('ru-RU')}
+                </div>
+                <div className="relative pl-5 pb-5 border-l border-slate-200 group-last:pb-0">
+                  <div className="absolute -left-[5px] top-1 w-2.5 h-2.5 rounded-full bg-slate-900"></div>
+                  <p className="text-sm font-black text-slate-900">{event.title}</p>
+                  <p className="text-xs text-slate-500 mt-1 leading-relaxed">{event.description}</p>
+                </div>
+              </div>
+            ))}
+          </div>
+        </section>
+      </div>
+    </motion.div>
   );
 };
 
