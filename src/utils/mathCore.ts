@@ -18,13 +18,16 @@ export function calculateDealMetrics(deal: any): DealMetrics {
   // 1. Basic Money Inputs
   const ownMoney = Number(deal.financials?.ownMoney) || 0;
   const creditMoney = Number(deal.financials?.creditMoney) || 0;
+  const propertyPriceInput = Number(deal.financials?.propertyPrice) || 0;
   const extraExpenses = (deal.financials?.extraExpenses || []).reduce(
     (sum: number, exp: any) => sum + (Number(exp.amount) || 0),
     0
   );
 
   const investmentSum = ownMoney + creditMoney + extraExpenses;
-  const objectPrice = ownMoney + creditMoney;
+  const objectPrice = (deal.participationFormat === 'fractional_ownership' && propertyPriceInput > 0)
+    ? propertyPriceInput
+    : (ownMoney + creditMoney);
 
   // 2. Share / Ownership
   let sharePercent = 100;
@@ -135,7 +138,8 @@ export function calculateDealMetrics(deal: any): DealMetrics {
   }
 
   // 7. Cap Rate and ROE
-  const capRate = objectPrice > 0 ? (noi * 12) / objectPrice * 100 : 0;
+  const capPrice = (deal.participationFormat === 'fractional_ownership' ? (objectPrice * shareRatio) : objectPrice);
+  const capRate = capPrice > 0 ? (noi * 12) / capPrice * 100 : 0;
 
   const equityIn = ownMoney + extraExpenses;
   const roe = equityIn > 0 ? ((cashFlow * 12) + (principalRepayment * 12)) / equityIn * 100 : 0;

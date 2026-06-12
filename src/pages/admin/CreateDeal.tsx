@@ -108,6 +108,7 @@ export default function CreateDeal() {
   const [purchaseDate, setPurchaseDate] = useState('');
   const [ownMoney, setOwnMoney] = useState('');
   const [creditMoney, setCreditMoney] = useState('');
+  const [propertyPrice, setPropertyPrice] = useState('');
   const [extraExpenses, setExtraExpenses] = useState<Array<{ id: string; category: string; amount: number }>>([
     { id: '1', category: 'Комиссия брокера', amount: 0 },
     { id: '2', category: 'Юридическая проверка', amount: 0 }
@@ -147,8 +148,7 @@ export default function CreateDeal() {
     plannedTermMonths: '',
     expectedYield: '',
     plannedProfit: '',
-    currentMarketValue: '',
-    earnedIncomeToDate: ''
+    currentMarketValue: ''
   });
 
   // Scroll target refs
@@ -196,6 +196,7 @@ export default function CreateDeal() {
         setPurchaseDate(existingDeal.financials.purchaseDate || '');
         setOwnMoney(String(existingDeal.financials.ownMoney || ''));
         setCreditMoney(String(existingDeal.financials.creditMoney || ''));
+        setPropertyPrice(existingDeal.financials.propertyPrice ? String(existingDeal.financials.propertyPrice) : '');
         setExtraExpenses(existingDeal.financials.extraExpenses || []);
       }
 
@@ -236,8 +237,7 @@ export default function CreateDeal() {
           plannedTermMonths: String(existingDeal.performance.plannedTermMonths || ''),
           expectedYield: String(existingDeal.performance.expectedYield || ''),
           plannedProfit: String(existingDeal.performance.plannedProfit || ''),
-          currentMarketValue: String(existingDeal.performance.currentMarketValue || ''),
-          earnedIncomeToDate: String(existingDeal.performance.earnedIncomeToDate || '')
+          currentMarketValue: String(existingDeal.performance.currentMarketValue || '')
         });
       }
     }
@@ -285,7 +285,7 @@ export default function CreateDeal() {
         endDate: '',
         indexationPercent: '',
         securityDeposit: '',
-        paysUtilities: 'да',
+        paysUtilities: 'Арендатор',
         rentHolidays: false,
         vacateRisk: 'низкий'
       }
@@ -333,10 +333,12 @@ export default function CreateDeal() {
 
   // Auto-calculated price per sqm
   const pricePerSqm = useMemo(() => {
-    const total = (Number(ownMoney) || 0) + (Number(creditMoney) || 0);
+    const total = (participationFormat === 'fractional_ownership' && Number(propertyPrice) > 0)
+      ? Number(propertyPrice)
+      : ((Number(ownMoney) || 0) + (Number(creditMoney) || 0));
     const area = Number(areaSqm) || 0;
     return area > 0 ? Math.round(total / area) : 0;
-  }, [ownMoney, creditMoney, areaSqm]);
+  }, [ownMoney, creditMoney, areaSqm, propertyPrice, participationFormat]);
 
   // Aggregate deal object for metrics calculation
   const aggregatedDeal = useMemo(() => {
@@ -351,6 +353,7 @@ export default function CreateDeal() {
         purchaseDate,
         ownMoney: Number(ownMoney) || 0,
         creditMoney: Number(creditMoney) || 0,
+        propertyPrice: Number(propertyPrice) || 0,
         extraExpenses
       },
       loan: {
@@ -387,7 +390,7 @@ export default function CreateDeal() {
         currentMarketValue: Number(performance.currentMarketValue) || 0
       }
     };
-  }, [participationFormat, participationDetails, calculatedLtv, currency, purchaseDate, ownMoney, creditMoney, extraExpenses, loan, tenants, expenses, performance]);
+  }, [participationFormat, participationDetails, calculatedLtv, currency, purchaseDate, ownMoney, creditMoney, propertyPrice, extraExpenses, loan, tenants, expenses, performance]);
 
   // Calculate metrics reactively
   const metrics = useMemo(() => calculateDealMetrics(aggregatedDeal), [aggregatedDeal]);
@@ -411,6 +414,12 @@ export default function CreateDeal() {
     if (!areaSqm.trim() || Number(areaSqm) <= 0) errs.areaSqm = 'Укажите площадь объекта';
     if (!ownMoney.trim() || Number(ownMoney) <= 0) errs.ownMoney = 'Укажите собственные деньги инвестора';
 
+    if (participationFormat === 'fractional_ownership') {
+      if (!propertyPrice.trim() || Number(propertyPrice) <= 0) {
+        errs.propertyPrice = 'Укажите стоимость объекта';
+      }
+    }
+
     if (Number(creditMoney) > 0) {
       if (!loan.annualRate || Number(loan.annualRate) <= 0) {
         errs.loanAnnualRate = 'Укажите ставку годовых по кредиту';
@@ -422,7 +431,7 @@ export default function CreateDeal() {
       }
     }
     return errs;
-  }, [name, areaSqm, ownMoney, creditMoney, loan.annualRate, loan.monthlyPayment, isCreditInterestValid]);
+  }, [name, areaSqm, ownMoney, creditMoney, loan.annualRate, loan.monthlyPayment, isCreditInterestValid, participationFormat, propertyPrice]);
 
   const canSave = useMemo(() => {
     return Object.keys(validationErrors).length === 0;
@@ -468,6 +477,7 @@ export default function CreateDeal() {
         purchaseDate,
         ownMoney: Number(ownMoney) || 0,
         creditMoney: Number(creditMoney) || 0,
+        propertyPrice: Number(propertyPrice) || 0,
         extraExpenses
       },
       loan: {
@@ -499,8 +509,7 @@ export default function CreateDeal() {
         plannedTermMonths: Number(performance.plannedTermMonths) || 0,
         expectedYield: Number(performance.expectedYield) || 0,
         plannedProfit: Number(performance.plannedProfit) || 0,
-        currentMarketValue: Number(performance.currentMarketValue) || 0,
-        earnedIncomeToDate: Number(performance.earnedIncomeToDate) || 0
+        currentMarketValue: Number(performance.currentMarketValue) || 0
       },
       comments: {
         documents: [],
@@ -1189,12 +1198,28 @@ export default function CreateDeal() {
                   />
                 </div>
 
-                <div className="flex flex-col gap-2">
-                  <label className="text-[10px] font-black uppercase tracking-widest text-slate-400">Цена объекта (Auto)</label>
-                  <input 
-                    type="text" readOnly value={formatCurrency(metrics.objectPrice)}
-                    className="w-full bg-slate-100 border border-slate-200 rounded-xl px-4 py-3 text-sm font-bold text-slate-500 focus:outline-none font-mono"
-                  />
+                 <div className="flex flex-col gap-2">
+                  {participationFormat === 'fractional_ownership' ? (
+                    <>
+                      <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 font-black">Цена объекта *</label>
+                      <input 
+                        type="text" value={formatNumberString(propertyPrice)} onChange={e => setPropertyPrice(parseNumberString(e.target.value))}
+                        placeholder="10 000 000"
+                        className={`w-full bg-slate-50 border rounded-xl px-4 py-3 text-sm font-bold text-slate-900 focus:outline-none font-mono ${showValidation && validationErrors.propertyPrice ? 'border-rose-500' : 'border-slate-200'}`}
+                      />
+                      {showValidation && validationErrors.propertyPrice && (
+                        <span className="text-[10px] text-rose-500 font-bold">{validationErrors.propertyPrice}</span>
+                      )}
+                    </>
+                  ) : (
+                    <>
+                      <label className="text-[10px] font-black uppercase tracking-widest text-slate-400">Цена объекта (Auto)</label>
+                      <input 
+                        type="text" readOnly value={formatCurrency(metrics.objectPrice)}
+                        className="w-full bg-slate-100 border border-slate-200 rounded-xl px-4 py-3 text-sm font-bold text-slate-500 focus:outline-none font-mono"
+                      />
+                    </>
+                  )}
                 </div>
 
                 <div className="flex flex-col gap-2">
@@ -1340,12 +1365,6 @@ export default function CreateDeal() {
               <div className="space-y-4 border-t border-slate-100 pt-6">
                 <div className="flex justify-between items-center">
                   <h3 className="text-xs font-black uppercase tracking-widest text-emerald-500">3.3. Данные по аренде (Доходы)</h3>
-                  <button 
-                    type="button" onClick={addTenant}
-                    className="flex items-center gap-1 text-[10px] font-black uppercase tracking-widest text-emerald-500 hover:text-emerald-600 transition-colors"
-                  >
-                    <Plus size={14} /> + Добавить арендатора
-                  </button>
                 </div>
 
                 <div className="space-y-4">
@@ -1427,11 +1446,14 @@ export default function CreateDeal() {
                         </div>
                         <div className="flex flex-col gap-2">
                           <label className="text-[10px] font-black uppercase tracking-widest text-slate-400">Кто платит КУ</label>
-                          <input 
-                            type="text" value={t.paysUtilities} onChange={e => updateTenant(t.id, 'paysUtilities', e.target.value)}
-                            placeholder="Арендатор"
+                          <select 
+                            value={t.paysUtilities || 'Арендатор'} 
+                            onChange={e => updateTenant(t.id, 'paysUtilities', e.target.value)}
                             className="w-full bg-white border border-slate-200 rounded-xl px-4 py-3 text-sm font-bold text-slate-900 focus:outline-none"
-                          />
+                          >
+                            <option value="Арендатор">Арендатор</option>
+                            <option value="Собственник">Собственник</option>
+                          </select>
                         </div>
                         <div className="flex flex-col gap-2">
                           <label className="text-[10px] font-black uppercase tracking-widest text-slate-400">Риск съезда</label>
@@ -1458,13 +1480,28 @@ export default function CreateDeal() {
                     </div>
                   ))}
                   
-                  {tenants.length === 0 && (
-                    <div className="text-center py-6 text-slate-400 italic text-xs border border-dashed border-slate-200 rounded-xl bg-slate-50/50">
-                      Арендаторы отсутствуют. Нажмите кнопку выше для добавления.
+                  {tenants.length === 0 ? (
+                    <div className="text-center py-8 border border-dashed border-slate-200 rounded-2xl bg-slate-50/50 flex flex-col items-center justify-center gap-3">
+                      <span className="text-xs text-slate-400 font-bold">Арендаторы отсутствуют</span>
+                      <button 
+                        type="button" onClick={addTenant}
+                        className="flex items-center gap-2 px-4 py-2 bg-emerald-50 text-emerald-600 hover:bg-emerald-100 transition-all rounded-xl text-xs font-bold"
+                      >
+                        <Plus size={16} /> Добавить арендатора
+                      </button>
+                    </div>
+                  ) : (
+                    <div className="flex justify-center pt-2">
+                      <button 
+                        type="button" onClick={addTenant}
+                        className="flex items-center gap-2 px-6 py-2.5 bg-emerald-50 text-emerald-600 hover:bg-emerald-100 transition-all rounded-xl text-xs font-black uppercase tracking-wider"
+                      >
+                        <Plus size={16} /> Добавить арендатора
+                      </button>
                     </div>
                   )}
 
-                  <div className="flex justify-between items-center pt-2">
+                  <div className="flex justify-between items-center pt-4 border-t border-slate-100">
                     <span className="text-[10px] font-black uppercase tracking-widest text-slate-400">Общий арендный поток (в мес.):</span>
                     <span className="text-sm font-bold text-slate-900 font-mono">{formatCurrency(metrics.totalRentalFlow)}</span>
                   </div>
@@ -1537,16 +1574,6 @@ export default function CreateDeal() {
                     type="text" value={formatNumberString(performance.currentMarketValue)} 
                     onChange={e => setPerformance({...performance, currentMarketValue: parseNumberString(e.target.value)})}
                     placeholder="12 000 000"
-                    className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-sm font-bold text-slate-900 focus:outline-none font-mono"
-                  />
-                </div>
-
-                <div className="flex flex-col gap-2">
-                  <label className="text-[10px] font-black uppercase tracking-widest text-slate-400">Полученный доход на сегодня</label>
-                  <input 
-                    type="text" value={formatNumberString(performance.earnedIncomeToDate)} 
-                    onChange={e => setPerformance({...performance, earnedIncomeToDate: parseNumberString(e.target.value)})}
-                    placeholder="120 000"
                     className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-sm font-bold text-slate-900 focus:outline-none font-mono"
                   />
                 </div>

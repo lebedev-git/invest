@@ -60,6 +60,7 @@ export interface Deal {
     purchaseDate?: string;
     ownMoney?: number;
     creditMoney?: number;
+    propertyPrice?: number;
     extraExpenses?: Array<{ id: string; category: string; amount: number }>;
   };
   loan?: {
@@ -99,6 +100,12 @@ export interface Deal {
     repairReserve?: number;
     taxModel?: string;
     taxRate?: number;
+  };
+  performance?: {
+    currentMarketValue?: number;
+    plannedTermMonths?: number;
+    expectedYield?: number;
+    plannedProfit?: number;
   };
   comments?: {
     documents?: Array<{ id: string; name: string; tag: string }>;
