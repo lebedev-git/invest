@@ -751,8 +751,8 @@ const ProjectDetailPage = ({ deal, forecastConfig, setForecastConfig, onBack }: 
           {[
             ['Цена покупки', formatRub(capital)],
             ['Площадь', deal.areaSqm ? `${deal.areaSqm} м²` : 'Не указана'],
-            ['Ставка аренды', deal.rentRatePerSqm ? `${formatRub(parseMoney(deal.rentRatePerSqm))} / м²` : 'Не указана'],
-            ['Налог', `${formatRub(parseMoney(deal.propertyTaxAnnual))} / год`],
+            ['Ставка аренды', deal.rentRatePerSqm ? `${formatRub(parseMoney(deal.rentRatePerSqm))} / м²` : (deal.metrics && deal.areaSqm ? `${formatRub(Math.round(deal.metrics.totalRentalFlow / deal.areaSqm))} / м²` : 'Не указана')],
+            ['Налог', deal.expenses?.propertyTax ? `${formatRub(deal.expenses.propertyTax * 12)} / год` : (deal.propertyTaxAnnual ? `${formatRub(parseMoney(deal.propertyTaxAnnual))} / год` : 'Не указан')],
             ['Чистый поток', formatSignedRub(annualProjectedIncome)],
             ['Окупаемость', paybackYears ? `${paybackYears.toFixed(2)} лет` : 'Не считается'],
             ['Срок сделки', deal.termDate ? new Date(deal.termDate).toLocaleDateString('ru-RU') : 'Не указан'],
