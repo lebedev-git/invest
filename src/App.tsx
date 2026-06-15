@@ -4,6 +4,7 @@ import Portal from './pages/Portal';
 import AdminLayout from './pages/admin/AdminLayout';
 import AdminDeals from './pages/admin/AdminDeals';
 import CreateDeal from './pages/admin/CreateDeal';
+import ProjectView from './pages/admin/ProjectView';
 import { DealProvider } from './context/DealContext';
 
 export default function App() {
@@ -17,6 +18,7 @@ export default function App() {
           <Route path="/deals" element={<AdminLayout />}>
             <Route index element={<AdminDeals />} />
             <Route path="create" element={<CreateDeal />} />
+            <Route path=":id" element={<ProjectView />} />
             <Route path=":id/edit" element={<CreateDeal />} />
           </Route>
 

@@ -668,7 +668,9 @@ const ProjectsTable = ({ forecastConfig, onSelectProject, currencyState }: {
 };
 
 const buildProjectHistory = (deal: Deal) => {
-  const createdAt = deal.statusHistory?.[0]?.date || new Date(2026, 0, 1).toISOString();
+  const statusHistory = deal.statusHistory || [];
+  const createdAt = statusHistory[0]?.date || new Date(2026, 0, 1).toISOString();
+
   const events = [
     {
       id: 'deal-created',
@@ -676,9 +678,26 @@ const buildProjectHistory = (deal: Deal) => {
       title: 'Сделка создана',
       description: deal.name,
     },
+    // Real status transitions tracked in DealContext.saveDeal
+    ...statusHistory.map((item, index) => ({
+      id: item.id || `${deal.id}-status-${index}`,
+      date: item.date,
+      title: `Статус: ${cleanText(item.status)}`,
+      description: item.comment || `Сделка переведена в статус «${cleanText(item.status)}».`,
+    })),
   ];
 
-  return events.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+  // De-duplicate the synthetic creation event when the initial status row
+  // carries the same timestamp, then show newest first.
+  const seen = new Set<string>();
+  return events
+    .filter(event => {
+      const key = `${new Date(event.date).getTime()}-${event.title}`;
+      if (seen.has(key)) return false;
+      seen.add(key);
+      return true;
+    })
+    .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
 };
 
 const ProjectDetailPage = ({ deal, forecastConfig, setForecastConfig, onBack }: {

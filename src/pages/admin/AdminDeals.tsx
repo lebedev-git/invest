@@ -1,7 +1,7 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'motion/react';
-import { Edit2, Plus, Trash2 } from 'lucide-react';
+import { Edit2, Eye, Plus, Trash2 } from 'lucide-react';
 import { Deal, DealInvestor, useDeals } from '../../context/DealContext';
 
 const money = (value?: number | string) => {
@@ -47,6 +47,10 @@ export default function AdminDeals() {
     navigate(`/deals/${deal.id}/edit`);
   };
 
+  const openView = (deal: Deal) => {
+    navigate(`/deals/${deal.id}`);
+  };
+
   const confirmDelete = (deal: Deal) => {
     const confirmation = window.prompt(`Для удаления сделки введите ее название: ${deal.name}`);
     if (confirmation === deal.name) deleteDeal(deal.id);
@@ -86,10 +90,13 @@ export default function AdminDeals() {
                     <span className="px-2.5 py-1 rounded-lg bg-slate-100 text-[10px] font-black uppercase tracking-widest text-slate-500">{label(deal.type)}</span>
                     <span className="px-2.5 py-1 rounded-lg bg-emerald-50 text-[10px] font-black uppercase tracking-widest text-emerald-700">{label(String(deal.status))}</span>
                   </div>
-                  <h2 className="text-lg font-black text-slate-900 leading-tight">{deal.name}</h2>
+                  <h2 onClick={() => openView(deal)} className="text-lg font-black text-slate-900 leading-tight cursor-pointer hover:text-emerald-600 transition-colors">{deal.name}</h2>
                   <p className="text-xs text-slate-400 font-bold uppercase mt-1">{deal.city}</p>
                 </div>
                 <div className="flex gap-2 shrink-0">
+                  <button onClick={() => openView(deal)} className="p-2 text-slate-400 hover:text-emerald-500 hover:bg-emerald-50 rounded-lg transition-all" title="Открыть">
+                    <Eye size={16} />
+                  </button>
                   <button onClick={() => startEdit(deal)} className="p-2 text-slate-400 hover:text-blue-500 hover:bg-blue-50 rounded-lg transition-all" title="Редактировать">
                     <Edit2 size={16} />
                   </button>
