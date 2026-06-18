@@ -11,6 +11,7 @@ export interface DealMetrics {
   currentEquity: number;
   capRate: number;
   roe: number;
+  dscr: number;
   paybackYears: number | string;
 }
 
@@ -104,20 +105,28 @@ export function calculateDealMetrics(deal: any): DealMetrics {
     noi = rawMonthlyIncome - taxes;
     cashFlow = noi - monthlyPayment; // monthlyPayment is credit cost if they leveraged to buy the loan/asset
   } else {
-    // Real estate / Property asset calculation
-    adjustedRentalFlow = totalRentalFlow * shareRatio;
-    adjustedOpex = totalOpex * shareRatio;
-
+    // Real estate / Property asset calculation.
+    // Core principle: first compute the WHOLE object (rent − opex − tax − loan),
+    // and only then distribute the resulting flow across the participant's share.
+    let wholeTaxes = 0;
     if (taxModel === 'usn_income' || taxModel === 'ndfl') {
-      taxes = adjustedRentalFlow * (taxRate / 100);
+      wholeTaxes = totalRentalFlow * (taxRate / 100);
     } else if (taxModel === 'usn_income_expenses') {
-      const classicTax = (adjustedRentalFlow - adjustedOpex - monthlyBankInterest) * (taxRate / 100);
-      const minTax = adjustedRentalFlow * 0.01;
-      taxes = Math.max(classicTax, minTax);
+      const classicTax = (totalRentalFlow - totalOpex - monthlyBankInterest) * (taxRate / 100);
+      const minTax = totalRentalFlow * 0.01;
+      wholeTaxes = Math.max(classicTax, minTax);
     }
 
-    noi = adjustedRentalFlow - adjustedOpex - taxes;
-    cashFlow = noi - monthlyPayment;
+    // Object-level flow (before any share split)
+    const wholeNoi = totalRentalFlow - totalOpex - wholeTaxes;
+    const wholeCashFlow = wholeNoi - monthlyPayment;
+
+    // Distribute the object-level flow to the participant's share
+    adjustedRentalFlow = totalRentalFlow * shareRatio;
+    adjustedOpex = totalOpex * shareRatio;
+    taxes = wholeTaxes * shareRatio;
+    noi = wholeNoi * shareRatio;
+    cashFlow = wholeCashFlow * shareRatio;
   }
 
   // 6. Current Equity
@@ -141,8 +150,14 @@ export function calculateDealMetrics(deal: any): DealMetrics {
   const capPrice = (deal.participationFormat === 'fractional_ownership' ? (objectPrice * shareRatio) : objectPrice);
   const capRate = capPrice > 0 ? (noi * 12) / capPrice * 100 : 0;
 
+  // Yield on the participant's own capital, based on the current cash flow.
+  // May be negative when the deal currently requires top-ups (cashFlow < 0).
   const equityIn = ownMoney + extraExpenses;
-  const roe = equityIn > 0 ? ((cashFlow * 12) + (principalRepayment * 12)) / equityIn * 100 : 0;
+  const roe = equityIn > 0 ? (cashFlow * 12) / equityIn * 100 : 0;
+
+  // DSCR — object-level NOI vs debt service (shareRatio cancels out, so it is share-independent)
+  const objectDebtService = monthlyPayment * shareRatio;
+  const dscr = objectDebtService > 0 ? noi / objectDebtService : 0;
 
   // 8. Payback Years
   let paybackYears: number | string = '—';
@@ -165,6 +180,7 @@ export function calculateDealMetrics(deal: any): DealMetrics {
     currentEquity,
     capRate,
     roe,
+    dscr,
     paybackYears
   };
 }

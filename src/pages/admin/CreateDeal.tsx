@@ -299,7 +299,14 @@ export default function CreateDeal() {
   const updateTenant = (tenantId: string, field: string, value: any) => {
     setTenants(prev => prev.map(t => {
       if (t.id !== tenantId) return t;
-      return { ...t, [field]: value };
+      const updated = { ...t, [field]: value };
+      // Rate per m² is always derived: monthly rent / area
+      if (field === 'monthlyRent' || field === 'areaSqm') {
+        const rent = Number(updated.monthlyRent) || 0;
+        const area = Number(updated.areaSqm) || 0;
+        updated.ratePerSqm = area > 0 ? String(Math.round(rent / area)) : '';
+      }
+      return updated;
     }));
   };
 
@@ -1407,11 +1414,12 @@ export default function CreateDeal() {
                         
                         {/* Optional fields inside Tenant block */}
                         <div className="flex flex-col gap-2">
-                          <label className="text-[10px] font-black uppercase tracking-widest text-slate-400">Ставка за м²</label>
-                          <input 
-                            type="text" value={formatNumberString(t.ratePerSqm)} onChange={e => updateTenant(t.id, 'ratePerSqm', parseNumberString(e.target.value))}
-                            placeholder="1 760"
-                            className="w-full bg-white border border-slate-200 rounded-xl px-4 py-3 text-sm font-bold text-slate-900 focus:outline-none font-mono"
+                          <label className="text-[10px] font-black uppercase tracking-widest text-slate-400">Ставка за м² (авто)</label>
+                          <input
+                            type="text" readOnly value={formatNumberString(t.ratePerSqm)}
+                            placeholder="Аренда ÷ площадь"
+                            title="Рассчитывается автоматически: месячная аренда ÷ площадь"
+                            className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-sm font-bold text-slate-500 focus:outline-none font-mono cursor-not-allowed"
                           />
                         </div>
                         <div className="flex flex-col gap-2">
@@ -1607,17 +1615,17 @@ export default function CreateDeal() {
                     cx="80"
                     cy="80"
                     r="66"
-                    className="stroke-emerald-500 transition-all duration-500"
+                    className={`transition-all duration-500 ${metrics.roe < 0 ? 'stroke-red-500' : 'stroke-emerald-500'}`}
                     strokeWidth="8"
                     fill="transparent"
                     strokeDasharray={415}
-                    strokeDashoffset={415 - (415 * Math.min(100, Math.max(0, metrics.roe))) / 100}
+                    strokeDashoffset={415 - (415 * Math.min(100, Math.abs(metrics.roe))) / 100}
                     strokeLinecap="round"
                   />
                 </svg>
                 <div className="absolute flex flex-col items-center text-center justify-center">
-                  <span className="text-xl font-black text-slate-900 leading-none tabular-nums">
-                    {metrics.roe > 0 ? `${metrics.roe.toFixed(1)}%` : '0.0%'}
+                  <span className={`text-xl font-black leading-none tabular-nums ${metrics.roe < 0 ? 'text-red-600' : 'text-slate-900'}`}>
+                    {`${metrics.roe.toFixed(1)}%`}
                   </span>
                   <span className="text-[9px] uppercase tracking-wider text-slate-400 font-black mt-1 leading-none">
                     Доходн. ROE
@@ -1633,11 +1641,15 @@ export default function CreateDeal() {
                 </div>
                 <div className="flex justify-between items-center border-b border-slate-50 pb-2">
                   <span className="text-[10px] font-black uppercase tracking-widest text-slate-400">Чистый поток (NOI)</span>
-                  <span className="text-xs font-bold text-emerald-600 font-mono">{formatCurrency(metrics.noi)}</span>
+                  <span className={`text-xs font-bold font-mono ${metrics.noi < 0 ? 'text-red-600' : 'text-emerald-600'}`}>{formatCurrency(metrics.noi)}</span>
                 </div>
                 <div className="flex justify-between items-center border-b border-slate-50 pb-2">
                   <span className="text-[10px] font-black uppercase tracking-widest text-slate-400">Денежный поток (CF)</span>
-                  <span className="text-xs font-bold text-emerald-600 font-mono">{formatCurrency(metrics.cashFlow)}</span>
+                  <span className={`text-xs font-bold font-mono ${metrics.cashFlow < 0 ? 'text-red-600' : 'text-emerald-600'}`}>{formatCurrency(metrics.cashFlow)}</span>
+                </div>
+                <div className="flex justify-between items-center border-b border-slate-50 pb-2">
+                  <span className="text-[10px] font-black uppercase tracking-widest text-slate-400">DSCR</span>
+                  <span className={`text-xs font-bold font-mono ${metrics.dscr > 0 && metrics.dscr < 1 ? 'text-red-600' : 'text-slate-900'}`}>{metrics.dscr > 0 ? metrics.dscr.toFixed(2) : '—'}</span>
                 </div>
                 <div className="flex justify-between items-center border-b border-slate-50 pb-2">
                   <span className="text-[10px] font-black uppercase tracking-widest text-slate-400">Срок окупаемости</span>

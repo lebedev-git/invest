@@ -168,6 +168,7 @@ export default function ProjectView() {
             />
             <HeroMetric label="Площадь" value={deal.areaSqm ? `${Number(deal.areaSqm).toLocaleString('ru-RU')} м²` : '—'} />
             <HeroMetric label="Cap Rate" value={metrics?.capRate ? `${metrics.capRate.toFixed(1)}%` : '—'} />
+            <HeroMetric label="DSCR" value={metrics?.dscr ? metrics.dscr.toFixed(2) : '—'} />
           </div>
         </div>
       </section>
