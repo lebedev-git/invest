@@ -1,7 +1,32 @@
-import React, { createContext, useContext, useState, useEffect } from 'react';
+import React, { createContext, useCallback, useContext, useEffect, useState } from 'react';
 import { calculateDealMetrics, DealMetrics } from '../utils/mathCore';
+import { pb } from '../lib/pb';
+import { useAuth } from './AuthContext';
 
-export type DealStatus = 'Сбор' | 'Сделка' | 'Регистрация' | 'Стройка' | 'Ремонт' | 'Поиск арендатора' | 'Аренда' | 'Продажа' | 'Закрыта' | 'Рассматривается';
+// Полный жизненный цикл статуса сделки — единый источник истины.
+// Карты STATUS_COLORS/STAGE_ORDER в utils/dealDisplay типизированы как
+// Record<DealStatus, …>, поэтому добавление статуса сюда без записи в картах
+// сразу ловится компилятором.
+export const DEAL_STATUSES = [
+  'Рассматривается',
+  'Сбор заявок',
+  'Сбор',
+  'Сделка',
+  'Куплен',
+  'Регистрация',
+  'Стройка',
+  'Ремонт',
+  'Поиск арендатора',
+  'Аренда',
+  'В управлении',
+  'Продажа',
+  'Закрыта',
+  'Завершен',
+] as const;
+
+// Поле deals.status в PocketBase — свободный text, поэтому на границе данных
+// допускаем | string (значение из БД может не входить в каноничный список).
+export type DealStatus = typeof DEAL_STATUSES[number];
 
 export interface StatusHistoryItem {
   id: string;
@@ -36,7 +61,7 @@ export interface Deal {
   gracePeriod?: string;
   utilities?: number | string;
   status: DealStatus | string;
-  invested?: number; 
+  invested?: number;
   share?: number;
   paidOut?: number;
   description?: string;
@@ -116,7 +141,7 @@ export interface Deal {
 
 export function recalculateDeal(deal: Deal): Deal {
   const calculated = calculateDealMetrics(deal);
-  
+
   let sharePercent = 100;
   const format = deal.participationFormat;
   const details = deal.participationDetails || {};
@@ -136,151 +161,140 @@ export function recalculateDeal(deal: Deal): Deal {
     invested: calculated.investmentSum,
     purchasePrice: calculated.objectPrice,
     share: sharePercent / 100,
-    areaSqm: Number(deal.areaSqm) || (deal.rent?.tenants || []).reduce((sum, t) => sum + (Number(t.areaSqm) || 0), 0)
+    areaSqm: Number(deal.areaSqm) || (deal.rent?.tenants || []).reduce((sum, t) => sum + (Number(t.areaSqm) || 0), 0),
   };
 }
 
-const INITIAL_DEALS: Deal[] = [
-  { id: '1', name: 'Street Retail «Октябрь»', type: 'Стрит-ритейл', city: 'Москва', targetIrr: '12.5', termDate: '2025-12-01', gracePeriod: '2025-01-01', utilities: 0, status: 'Аренда', invested: 5000000, share: 0.15, statusHistory: [{ id: '1-status-1', status: 'Аренда', date: '2026-01-15T10:00:00.000Z', comment: 'Объект переведен в арендный этап.' }] },
-  { id: '2', name: 'Self Storage «Восток»', type: 'Склад', city: 'Казань', targetIrr: '24.0', termDate: '2026-06-01', gracePeriod: '', utilities: 0, status: 'Стройка', invested: 4200000, share: 0.08, statusHistory: [{ id: '2-status-1', status: 'Стройка', date: '2026-02-10T10:00:00.000Z', comment: 'Проект находится на строительном этапе.' }] },
-  { id: '3', name: 'Редевелопмент Loft Yard', type: 'Редевелопмент', city: 'СПБ', targetIrr: '0', termDate: '2025-12-31', gracePeriod: '', utilities: 0, status: 'Ремонт', invested: 3250000, share: 0.12, statusHistory: [{ id: '3-status-1', status: 'Ремонт', date: '2026-02-20T10:00:00.000Z', comment: 'Запущены ремонтные работы.' }] },
-  { id: '4', name: 'ГАБ «Пятерочка»', type: 'ГАБ', city: 'Екатеринбург', targetIrr: '10.8', termDate: '2027-11-15', gracePeriod: '', utilities: 0, status: 'Аренда', invested: 7000000, share: 0.05, statusHistory: [{ id: '4-status-1', status: 'Аренда', date: '2026-03-01T10:00:00.000Z', comment: 'Объект работает в арендном режиме.' }] },
-];
+// --- PocketBase mapping -----------------------------------------------------
 
-function ensureStatusHistory(deal: Deal): Deal {
-  if (deal.statusHistory && deal.statusHistory.length > 0) return deal;
+// Запись PocketBase → объект Deal (весь объект лежит в поле data, id берём из записи).
+function recordToDeal(rec: any): Deal {
+  const data = (rec.data || {}) as Partial<Deal>;
   return {
-    ...deal,
-    statusHistory: [{
-      id: `${deal.id}-status-initial`,
-      status: String(deal.status || 'Сбор заявок'),
-      date: new Date().toISOString(),
-      comment: 'Начальный статус зафиксирован автоматически.',
-    }],
+    ...data,
+    id: rec.id,
+    name: rec.name ?? data.name ?? '',
+    type: rec.type ?? data.type ?? '',
+    city: rec.city ?? data.city ?? '',
+    status: (rec.status ?? data.status ?? '') as Deal['status'],
+    targetIrr: (data.targetIrr ?? rec.target_irr ?? '0') as string,
+    termDate: (data.termDate ?? rec.term_date ?? '') as string,
+    statusHistory: [],
+  } as Deal;
+}
+
+// Объект Deal → тело записи PocketBase (зеркалим ключевые поля в колонки + весь объект в data).
+function dealToBody(deal: Deal) {
+  const { id, statusHistory, ...rest } = deal;
+  return {
+    name: deal.name || 'Без названия',
+    type: deal.type || '',
+    city: deal.city || '',
+    status: String(deal.status || ''),
+    target_irr: String(deal.targetIrr ?? ''),
+    term_date: deal.termDate || '',
+    data: rest,
   };
 }
 
 interface DealContextType {
   deals: Deal[];
-  saveDeal: (deal: Deal) => void;
-  deleteDeal: (id: string) => void;
+  loading: boolean;
+  error: string | null;
+  saveDeal: (deal: Deal) => Promise<void>;
+  deleteDeal: (id: string) => Promise<void>;
+  reload: () => Promise<void>;
 }
 
 const DealContext = createContext<DealContextType | undefined>(undefined);
-const DEALS_STORAGE_KEY = 'x7_deals';
-const DEALS_BACKUP_STORAGE_KEY = 'x7_deals_backup';
-
-function readStoredDeals() {
-  for (const key of [DEALS_STORAGE_KEY, DEALS_BACKUP_STORAGE_KEY]) {
-    const saved = localStorage.getItem(key);
-    if (!saved) continue;
-    try {
-      const parsed = JSON.parse(saved);
-      if (Array.isArray(parsed)) return parsed.map(ensureStatusHistory);
-    } catch (e) {
-      // Try the backup key before falling back to demo data.
-    }
-  }
-  return null;
-}
 
 export function DealProvider({ children }: { children: React.ReactNode }) {
-  const [deals, setDeals] = useState<Deal[]>(() => {
-    let storedDeals = readStoredDeals();
-    if (!storedDeals) {
-      storedDeals = INITIAL_DEALS.map(ensureStatusHistory);
-    }
+  const { isAuthenticated } = useAuth();
+  const [deals, setDeals] = useState<Deal[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
-    // Run monthly cron simulation to update debt balance
-    try {
-      const lastCheckStr = localStorage.getItem('x7_last_cron_check');
-      const today = new Date();
-      
-      if (!lastCheckStr) {
-        localStorage.setItem('x7_last_cron_check', today.toISOString());
-      } else {
-        const lastCheck = new Date(lastCheckStr);
-        let checkDate = new Date(lastCheck.getFullYear(), lastCheck.getMonth() + 1, 1);
-        let ranSimulation = false;
-        
-        while (checkDate <= today) {
-          ranSimulation = true;
-          storedDeals = storedDeals.map(deal => {
-            if (deal.financials?.creditMoney && deal.loan?.currentDebtBalance && deal.loan?.annualRate && deal.loan?.monthlyPayment) {
-              const debt = Number(deal.loan.currentDebtBalance) || 0;
-              const rate = Number(deal.loan.annualRate) || 0;
-              const payment = Number(deal.loan.monthlyPayment) || 0;
-              
-              const monthlyInterest = (debt * rate / 100) / 12;
-              const principalRepay = Math.max(0, payment - monthlyInterest);
-              const nextDebt = Math.max(0, debt - principalRepay);
-              
-              return {
-                ...deal,
-                loan: {
-                  ...deal.loan,
-                  currentDebtBalance: nextDebt
-                }
-              };
-            }
-            return deal;
-          });
-          
-          checkDate.setMonth(checkDate.getMonth() + 1);
-        }
-        
-        if (ranSimulation) {
-          storedDeals = storedDeals.map(recalculateDeal);
-          localStorage.setItem('x7_last_cron_check', today.toISOString());
-        }
-      }
-    } catch (e) {
-      console.error('Failed to run debt simulation', e);
+  const loadDeals = useCallback(async () => {
+    if (!pb.authStore.isValid) {
+      setDeals([]);
+      return;
     }
-    
-    return storedDeals;
-  });
+    setLoading(true);
+    setError(null);
+    try {
+      const [dealRecs, historyRecs] = await Promise.all([
+        pb.collection('deals').getFullList({ sort: '-created' }),
+        pb.collection('status_history').getFullList({ sort: 'created' }),
+      ]);
+
+      const byDeal: Record<string, StatusHistoryItem[]> = {};
+      for (const h of historyRecs as any[]) {
+        (byDeal[h.deal] ||= []).push({ id: h.id, status: h.status, date: h.created, comment: h.comment });
+      }
+
+      setDeals((dealRecs as any[]).map(rec => {
+        const deal = recordToDeal(rec);
+        deal.statusHistory = byDeal[rec.id] || [];
+        return deal;
+      }));
+    } catch (e: any) {
+      // Техническая причина — в консоль; пользователю показываем русское сообщение.
+      console.error('Не удалось загрузить сделки', e);
+      setDeals([]);
+      setError('Не удалось загрузить данные. Проверьте соединение с сервером и повторите.');
+    } finally {
+      setLoading(false);
+    }
+  }, []);
 
   useEffect(() => {
-    const serialized = JSON.stringify(deals);
-    localStorage.setItem(DEALS_STORAGE_KEY, serialized);
-    localStorage.setItem(DEALS_BACKUP_STORAGE_KEY, serialized);
-  }, [deals]);
+    loadDeals();
+  }, [isAuthenticated, loadDeals]);
 
-  const saveDeal = (deal: Deal) => {
+  const saveDeal = useCallback(async (deal: Deal) => {
     const recalculated = recalculateDeal(deal);
-    setDeals(prev => {
-      const exists = prev.find(d => d.id === recalculated.id);
-      if (exists) {
-        return prev.map(d => {
-          if (d.id !== recalculated.id) return d;
-          const previous = ensureStatusHistory(d);
-          const next = ensureStatusHistory(recalculated);
-          if (String(previous.status) === String(next.status)) return { ...next, statusHistory: previous.statusHistory };
-          return {
-            ...next,
-            statusHistory: [
-              ...(previous.statusHistory || []),
-              {
-                id: `${recalculated.id}-status-${Date.now()}`,
-                status: String(next.status),
-                date: new Date().toISOString(),
-                comment: `Статус изменен с "${previous.status}" на "${next.status}".`,
-              },
-            ],
-          };
+    const body = dealToBody(recalculated);
+    const existing = deals.find(d => d.id === recalculated.id);
+    try {
+      if (existing) {
+        const saved: any = await pb.collection('deals').update(existing.id, body);
+        if (String(existing.status) !== String(recalculated.status)) {
+          await pb.collection('status_history').create({
+            deal: saved.id,
+            status: String(recalculated.status),
+            comment: `Статус изменён с "${existing.status}" на "${recalculated.status}".`,
+          });
+        }
+      } else {
+        const saved: any = await pb.collection('deals').create({
+          ...body,
+          created_by: pb.authStore.record?.id,
+        });
+        await pb.collection('status_history').create({
+          deal: saved.id,
+          status: String(recalculated.status),
+          comment: 'Начальный статус зафиксирован.',
         });
       }
-      return [ensureStatusHistory(recalculated), ...prev];
-    });
-  };
+      await loadDeals();
+    } catch (e) {
+      console.error('Не удалось сохранить сделку', e);
+      throw e;
+    }
+  }, [deals, loadDeals]);
 
-  const deleteDeal = (id: string) => {
-    setDeals(prev => prev.filter(d => d.id !== id));
-  };
+  const deleteDeal = useCallback(async (id: string) => {
+    try {
+      await pb.collection('deals').delete(id);
+      await loadDeals();
+    } catch (e) {
+      console.error('Не удалось удалить сделку', e);
+      throw e;
+    }
+  }, [loadDeals]);
 
   return (
-    <DealContext.Provider value={{ deals, saveDeal, deleteDeal }}>
+    <DealContext.Provider value={{ deals, loading, error, saveDeal, deleteDeal, reload: loadDeals }}>
       {children}
     </DealContext.Provider>
   );
@@ -291,4 +305,3 @@ export function useDeals() {
   if (!context) throw new Error('useDeals must be used within DealProvider');
   return context;
 }
-

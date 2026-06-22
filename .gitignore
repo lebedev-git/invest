@@ -9,4 +9,9 @@ coverage/
 
 .vercel
 
-.vercel
+# PocketBase: бинарь и данные не коммитим, миграции — коммитим
+/pb/pocketbase.exe
+/pb/pocketbase
+/pb/pb_data/
+/pb/CHANGELOG.md
+/pb/LICENSE.md

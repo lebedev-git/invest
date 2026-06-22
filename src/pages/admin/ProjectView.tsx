@@ -14,26 +14,11 @@ import {
   Coins,
 } from 'lucide-react';
 import { Deal, useDeals } from '../../context/DealContext';
+import { statusColor } from '../../utils/dealDisplay';
 
 const money = (value?: number | string) => {
   const amount = Number(value) || 0;
   return amount !== 0 ? `${Math.round(amount).toLocaleString('ru-RU')} ₽` : '—';
-};
-
-const STATUS_COLORS: Record<string, string> = {
-  'Сбор заявок': 'bg-purple-100 text-purple-700',
-  'Сбор': 'bg-purple-100 text-purple-700',
-  'Сделка': 'bg-sky-100 text-sky-700',
-  'Регистрация': 'bg-blue-100 text-blue-700',
-  'Стройка': 'bg-amber-100 text-amber-700',
-  'Ремонт': 'bg-orange-100 text-orange-700',
-  'Поиск арендатора': 'bg-indigo-100 text-indigo-700',
-  'Аренда': 'bg-emerald-100 text-emerald-700',
-  'В управлении': 'bg-emerald-100 text-emerald-700',
-  'Продажа': 'bg-rose-100 text-rose-700',
-  'Завершен': 'bg-slate-100 text-slate-700',
-  'Закрыта': 'bg-slate-100 text-slate-700',
-  'Рассматривается': 'bg-slate-100 text-slate-500',
 };
 
 const FORMAT_LABELS: Record<string, string> = {
@@ -87,7 +72,7 @@ export default function ProjectView() {
   if (!deal) {
     return (
       <div className="max-w-[1100px] mx-auto flex flex-col items-center justify-center gap-4 py-24 text-center">
-        <h1 className="text-xl font-black text-slate-900 uppercase tracking-tight">Сделка не найдена</h1>
+        <h1 className="text-xl font-black text-slate-100 uppercase tracking-tight">Сделка не найдена</h1>
         <p className="text-sm text-slate-500 font-medium">Возможно, она была удалена или ссылка устарела.</p>
         <button
           onClick={() => navigate('/deals')}
@@ -127,7 +112,7 @@ export default function ProjectView() {
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <button
           onClick={() => navigate('/deals')}
-          className="flex items-center gap-2 text-[10px] font-black uppercase tracking-widest text-slate-500 hover:text-slate-900 transition-all w-fit"
+          className="flex items-center gap-2 text-[10px] font-black uppercase tracking-widest text-slate-500 hover:text-slate-100 transition-all w-fit"
         >
           <ArrowLeft size={16} /> Назад к списку
         </button>
@@ -145,7 +130,7 @@ export default function ProjectView() {
         <div className="relative z-10">
           <div className="flex flex-wrap items-center gap-3 mb-3">
             <span className="px-3 py-1 rounded-lg bg-white/10 text-[10px] font-black uppercase tracking-widest text-white/70">{deal.type}</span>
-            <span className={`px-3 py-1 rounded-lg text-[10px] font-black uppercase tracking-widest ${STATUS_COLORS[statusLabel] || 'bg-white/10 text-white/70'}`}>{statusLabel}</span>
+            <span className={`px-3 py-1 rounded-lg text-[10px] font-black uppercase tracking-widest ${statusColor(statusLabel)}`}>{statusLabel}</span>
           </div>
           <h1 className="text-3xl lg:text-4xl font-black tracking-tight leading-tight">{deal.name}</h1>
           <p className="flex items-center gap-1.5 text-[11px] uppercase tracking-widest text-white/40 font-bold mt-2">
@@ -195,9 +180,9 @@ export default function ProjectView() {
             <Card icon={Users} title="Арендаторы">
               <div className="flex flex-col gap-3">
                 {tenants.map((t, idx) => (
-                  <div key={t.id || idx} className="bg-slate-50 border border-slate-100 rounded-2xl p-4">
+                  <div key={t.id || idx} className="bg-surface-2 border border-line rounded-2xl p-4">
                     <div className="flex items-center justify-between gap-3 mb-2">
-                      <span className="text-sm font-black text-slate-900">{t.name || `Арендатор #${idx + 1}`}</span>
+                      <span className="text-sm font-black text-slate-100">{t.name || `Арендатор #${idx + 1}`}</span>
                       <span className="text-sm font-bold text-emerald-600 font-mono">{money(t.monthlyRent)}/мес</span>
                     </div>
                     <div className="flex flex-wrap gap-2">
@@ -209,9 +194,9 @@ export default function ProjectView() {
                     </div>
                   </div>
                 ))}
-                <div className="flex justify-between items-center pt-3 border-t border-slate-100">
+                <div className="flex justify-between items-center pt-3 border-t border-line">
                   <span className="text-[10px] font-black uppercase tracking-widest text-slate-400">Общий арендный поток / мес</span>
-                  <span className="text-sm font-black text-slate-900 font-mono">{money(metrics?.totalRentalFlow)}</span>
+                  <span className="text-sm font-black text-slate-100 font-mono">{money(metrics?.totalRentalFlow)}</span>
                 </div>
               </div>
             </Card>
@@ -264,9 +249,9 @@ export default function ProjectView() {
               {history.map(event => (
                 <div key={event.id} className="grid grid-cols-[76px_1fr] gap-3">
                   <div className="text-[10px] font-bold text-slate-400 uppercase pt-0.5">{formatDate(event.date)}</div>
-                  <div className="relative pl-4 pb-4 border-l border-slate-200 last:pb-0">
+                  <div className="relative pl-4 pb-4 border-l border-line last:pb-0">
                     <div className="absolute -left-[5px] top-1 w-2.5 h-2.5 rounded-full bg-slate-900"></div>
-                    <p className="text-xs font-black text-slate-900 leading-tight">{event.title}</p>
+                    <p className="text-xs font-black text-slate-100 leading-tight">{event.title}</p>
                     <p className="text-[11px] text-slate-500 mt-1 leading-relaxed">{event.description}</p>
                   </div>
                 </div>
@@ -290,8 +275,8 @@ function HeroMetric({ label, value, accent }: { label: string; value: string; ac
 
 function Card({ icon: Icon, title, children }: { icon: React.ElementType; title: string; children: React.ReactNode }) {
   return (
-    <section className="bg-white rounded-3xl border border-slate-200 shadow-sm p-6">
-      <h3 className="font-black text-slate-900 uppercase tracking-tight text-sm mb-5 flex items-center gap-2">
+    <section className="bg-surface rounded-3xl border border-line shadow-sm p-6">
+      <h3 className="font-black text-slate-100 uppercase tracking-tight text-sm mb-5 flex items-center gap-2">
         <Icon size={16} className="text-slate-400" /> {title}
       </h3>
       {children}
@@ -301,20 +286,20 @@ function Card({ icon: Icon, title, children }: { icon: React.ElementType; title:
 
 function Row({ label, value }: { label: string; value: string }) {
   return (
-    <div className="flex items-center justify-between gap-4 py-3 border-b border-slate-100 last:border-0">
+    <div className="flex items-center justify-between gap-4 py-3 border-b border-line last:border-0">
       <span className="text-[10px] uppercase tracking-widest text-slate-400 font-black">{label}</span>
-      <span className="text-sm font-bold text-slate-900 text-right">{value}</span>
+      <span className="text-sm font-bold text-slate-100 text-right">{value}</span>
     </div>
   );
 }
 
 function Pill({ children }: { children: React.ReactNode }) {
-  return <span className="px-2.5 py-1 rounded-lg bg-white border border-slate-200 text-[10px] font-bold text-slate-500">{children}</span>;
+  return <span className="px-2.5 py-1 rounded-lg bg-surface border border-line text-[10px] font-bold text-slate-500">{children}</span>;
 }
 
 function EmptyState({ text }: { text: string }) {
   return (
-    <div className="border border-dashed border-slate-200 rounded-2xl bg-slate-50/50 p-5 text-center">
+    <div className="border border-dashed border-line rounded-2xl bg-surface-2/50 p-5 text-center">
       <p className="text-xs text-slate-400 font-medium leading-relaxed">{text}</p>
     </div>
   );

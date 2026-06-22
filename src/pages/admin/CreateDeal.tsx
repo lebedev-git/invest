@@ -542,9 +542,9 @@ export default function CreateDeal() {
   return (
     <div className="max-w-[1600px] mx-auto flex flex-col gap-6 pb-24">
       {/* Header */}
-      <div className="bg-white border border-slate-200 p-6 rounded-2xl shadow-sm flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+      <div className="bg-surface border border-line p-6 rounded-2xl shadow-sm flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
         <div>
-          <h1 className="text-2xl font-black text-slate-900 uppercase tracking-tight">
+          <h1 className="text-2xl font-black text-slate-100 uppercase tracking-tight">
             {isEdit ? 'Редактировать сделку' : 'Добавить сделку'}
           </h1>
           <p className="text-slate-500 text-xs mt-1 font-medium">
@@ -554,13 +554,13 @@ export default function CreateDeal() {
         <div className="flex gap-3 shrink-0">
           <button 
             onClick={() => navigate('/deals')}
-            className="px-5 py-2.5 bg-white text-slate-700 font-bold text-xs uppercase tracking-widest rounded-xl border border-slate-200 hover:bg-slate-50 transition-all shadow-sm"
+            className="px-5 py-2.5 bg-surface text-slate-300 font-bold text-xs uppercase tracking-widest rounded-xl border border-line hover:bg-surface-2 transition-all shadow-sm"
           >
             Отмена
           </button>
           <button 
             onClick={() => handleSubmit(true)}
-            className="px-5 py-2.5 bg-slate-100 text-slate-700 font-black text-xs uppercase tracking-widest rounded-xl hover:bg-slate-200 transition-all shadow-sm"
+            className="px-5 py-2.5 bg-surface-2 text-slate-300 font-black text-xs uppercase tracking-widest rounded-xl hover:bg-white/10 transition-all shadow-sm"
           >
             Сохранить черновик
           </button>
@@ -569,13 +569,13 @@ export default function CreateDeal() {
 
       {/* Navigation Shortcuts */}
       <div className="flex flex-wrap gap-2">
-        <button onClick={() => scrollToBlock(block1Ref)} className="px-4 py-2 bg-white border border-slate-200 hover:border-slate-400 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all text-slate-600">
+        <button onClick={() => scrollToBlock(block1Ref)} className="px-4 py-2 bg-surface border border-line hover:border-slate-400 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all text-slate-600">
           1. Информация
         </button>
-        <button onClick={() => scrollToBlock(block2Ref)} className="px-4 py-2 bg-white border border-slate-200 hover:border-slate-400 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all text-slate-600">
+        <button onClick={() => scrollToBlock(block2Ref)} className="px-4 py-2 bg-surface border border-line hover:border-slate-400 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all text-slate-600">
           2. Формат участия
         </button>
-        <button onClick={() => scrollToBlock(block3Ref)} className="px-4 py-2 bg-white border border-slate-200 hover:border-slate-400 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all text-slate-600">
+        <button onClick={() => scrollToBlock(block3Ref)} className="px-4 py-2 bg-surface border border-line hover:border-slate-400 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all text-slate-600">
           3. Финансы
         </button>
       </div>
@@ -587,8 +587,8 @@ export default function CreateDeal() {
         <div className="space-y-8">
           
           {/* Block 1. Basic Info */}
-          <div ref={block1Ref} className="bg-white border border-slate-200 rounded-3xl p-8 shadow-sm space-y-6">
-            <h2 className="text-sm font-black uppercase tracking-widest text-slate-900 border-b border-slate-100 pb-4 flex items-center gap-2">
+          <div ref={block1Ref} className="bg-surface border border-line rounded-3xl p-8 shadow-sm space-y-6">
+            <h2 className="text-sm font-black uppercase tracking-widest text-slate-100 border-b border-line pb-4 flex items-center gap-2">
               <span className="w-5 h-5 rounded-full bg-emerald-500/10 text-emerald-600 flex items-center justify-center font-black text-xs font-mono">1</span>
               Основная информация об активе
             </h2>
@@ -599,7 +599,7 @@ export default function CreateDeal() {
                 <input 
                   type="text" value={name} onChange={e => setName(e.target.value)}
                   placeholder="Например: Покупка Street-retail на Октябрьском пр."
-                  className={`w-full bg-slate-50 border rounded-xl px-4 py-3 text-sm font-bold text-slate-900 focus:outline-none transition-all placeholder:text-slate-300 ${showValidation && validationErrors.name ? 'border-rose-500' : 'border-slate-200 focus:border-emerald-500'}`}
+                  className={`w-full bg-surface-2 border rounded-xl px-4 py-3 text-sm font-bold text-slate-100 focus:outline-none transition-all placeholder:text-slate-300 ${showValidation && validationErrors.name ? 'border-rose-500' : 'border-line focus:border-emerald-500'}`}
                 />
                 {showValidation && validationErrors.name && (
                   <span className="text-[10px] text-rose-500 font-bold">{validationErrors.name}</span>
@@ -610,7 +610,7 @@ export default function CreateDeal() {
                 <label className="text-[10px] font-black uppercase tracking-widest text-slate-400">Тип объекта *</label>
                 <select 
                   value={type} onChange={e => setType(e.target.value)}
-                  className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-sm font-bold text-slate-900 focus:outline-none cursor-pointer"
+                  className="w-full bg-surface-2 border border-line rounded-xl px-4 py-3 text-sm font-bold text-slate-100 focus:outline-none cursor-pointer"
                 >
                   {['ГАБ', 'Street-retail', 'Офисное помещение', 'Склад', 'Производственное помещение', 'Земельный участок', 'Апартаменты', 'Self-storage / кладовки', 'Редевелопмент', 'Другое'].map(t => (
                     <option key={t} value={t}>{t}</option>
@@ -622,7 +622,7 @@ export default function CreateDeal() {
                 <label className="text-[10px] font-black uppercase tracking-widest text-slate-400">Статус *</label>
                 <select 
                   value={status} onChange={e => setStatus(e.target.value)}
-                  className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-sm font-bold text-slate-900 focus:outline-none cursor-pointer"
+                  className="w-full bg-surface-2 border border-line rounded-xl px-4 py-3 text-sm font-bold text-slate-100 focus:outline-none cursor-pointer"
                 >
                   <option value="Куплен">Куплен</option>
                   <option value="В управлении">В управлении</option>
@@ -635,7 +635,7 @@ export default function CreateDeal() {
                 <input 
                   type="text" value={city} onChange={e => setCity(e.target.value)}
                   placeholder="Москва"
-                  className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-sm font-bold text-slate-900 focus:outline-none"
+                  className="w-full bg-surface-2 border border-line rounded-xl px-4 py-3 text-sm font-bold text-slate-100 focus:outline-none"
                 />
               </div>
 
@@ -644,7 +644,7 @@ export default function CreateDeal() {
                 <input 
                   type="text" value={address} onChange={e => setAddress(e.target.value)}
                   placeholder="ул. Ленина, д. 10"
-                  className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-sm font-bold text-slate-900 focus:outline-none"
+                  className="w-full bg-surface-2 border border-line rounded-xl px-4 py-3 text-sm font-bold text-slate-100 focus:outline-none"
                 />
               </div>
 
@@ -653,7 +653,7 @@ export default function CreateDeal() {
                 <input 
                   type="text" value={formatNumberString(areaSqm)} onChange={e => setAreaSqm(parseNumberString(e.target.value))}
                   placeholder="120"
-                  className={`w-full bg-slate-50 border rounded-xl px-4 py-3 text-sm font-bold text-slate-900 focus:outline-none font-mono ${showValidation && validationErrors.areaSqm ? 'border-rose-500' : 'border-slate-200'}`}
+                  className={`w-full bg-surface-2 border rounded-xl px-4 py-3 text-sm font-bold text-slate-100 focus:outline-none font-mono ${showValidation && validationErrors.areaSqm ? 'border-rose-500' : 'border-line'}`}
                 />
                 {showValidation && validationErrors.areaSqm && (
                   <span className="text-[10px] text-rose-500 font-bold">{validationErrors.areaSqm}</span>
@@ -666,17 +666,17 @@ export default function CreateDeal() {
                   value={description} onChange={e => setDescription(e.target.value)}
                   rows={3}
                   placeholder="Описание преимуществ объекта, арендатора или стратегии..."
-                  className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-sm font-medium text-slate-900 focus:outline-none resize-none leading-relaxed"
+                  className="w-full bg-surface-2 border border-line rounded-xl px-4 py-3 text-sm font-medium text-slate-100 focus:outline-none resize-none leading-relaxed"
                 />
               </div>
             </div>
 
             {/* Spoiler / Disclosure */}
-            <div className="border-t border-slate-100 pt-4">
+            <div className="border-t border-line pt-4">
               <button 
                 type="button" 
                 onClick={() => setShowAdditional(!showAdditional)}
-                className="flex items-center gap-2 text-[10px] font-black uppercase tracking-widest text-slate-400 hover:text-slate-900 transition-colors"
+                className="flex items-center gap-2 text-[10px] font-black uppercase tracking-widest text-slate-400 hover:text-slate-100 transition-colors"
               >
                 <ChevronDown className={`transform transition-transform ${showAdditional ? 'rotate-180' : ''}`} size={16} />
                 Дополнительные характеристики объекта
@@ -692,7 +692,7 @@ export default function CreateDeal() {
                       value={additional.floor} 
                       onChange={e => setAdditional({...additional, floor: e.target.value})}
                       placeholder="1"
-                      className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-sm font-bold text-slate-900 focus:outline-none"
+                      className="w-full bg-surface-2 border border-line rounded-xl px-4 py-3 text-sm font-bold text-slate-100 focus:outline-none"
                     />
                     <datalist id="floors-list">
                       {Array.from({ length: 10 }, (_, i) => String(i + 1)).map(num => (
@@ -705,7 +705,7 @@ export default function CreateDeal() {
                     <input 
                       type="text" value={formatNumberString(additional.wetPoints)} onChange={e => setAdditional({...additional, wetPoints: parseNumberString(e.target.value)})}
                       placeholder="2"
-                      className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-sm font-bold text-slate-900 focus:outline-none font-mono"
+                      className="w-full bg-surface-2 border border-line rounded-xl px-4 py-3 text-sm font-bold text-slate-100 focus:outline-none font-mono"
                     />
                   </div>
                   <div className="flex flex-col gap-2">
@@ -713,38 +713,38 @@ export default function CreateDeal() {
                     <input 
                       type="text" value={formatNumberString(additional.electricalPower)} onChange={e => setAdditional({...additional, electricalPower: parseNumberString(e.target.value)})}
                       placeholder="15"
-                      className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-sm font-bold text-slate-900 focus:outline-none font-mono"
+                      className="w-full bg-surface-2 border border-line rounded-xl px-4 py-3 text-sm font-bold text-slate-100 focus:outline-none font-mono"
                     />
                   </div>
                   <div className="flex items-center gap-3 pt-6">
                     <button
                       type="button"
                       onClick={() => setAdditional({...additional, separateEntrance: !additional.separateEntrance})}
-                      className={`w-10 h-6 rounded-full p-1 transition-colors duration-200 focus:outline-none ${additional.separateEntrance ? 'bg-emerald-500' : 'bg-slate-200'}`}
+                      className={`w-10 h-6 rounded-full p-1 transition-colors duration-200 focus:outline-none ${additional.separateEntrance ? 'bg-emerald-500' : 'bg-white/10'}`}
                     >
-                      <div className={`w-4 h-4 rounded-full bg-white shadow-sm transform transition-transform duration-200 ${additional.separateEntrance ? 'translate-x-4' : 'translate-x-0'}`}></div>
+                      <div className={`w-4 h-4 rounded-full bg-surface shadow-sm transform transition-transform duration-200 ${additional.separateEntrance ? 'translate-x-4' : 'translate-x-0'}`}></div>
                     </button>
-                    <span className="text-xs font-bold text-slate-700">Отдельный вход</span>
+                    <span className="text-xs font-bold text-slate-300">Отдельный вход</span>
                   </div>
                   <div className="flex items-center gap-3 pt-6">
                     <button
                       type="button"
                       onClick={() => setAdditional({...additional, showcases: !additional.showcases})}
-                      className={`w-10 h-6 rounded-full p-1 transition-colors duration-200 focus:outline-none ${additional.showcases ? 'bg-emerald-500' : 'bg-slate-200'}`}
+                      className={`w-10 h-6 rounded-full p-1 transition-colors duration-200 focus:outline-none ${additional.showcases ? 'bg-emerald-500' : 'bg-white/10'}`}
                     >
-                      <div className={`w-4 h-4 rounded-full bg-white shadow-sm transform transition-transform duration-200 ${additional.showcases ? 'translate-x-4' : 'translate-x-0'}`}></div>
+                      <div className={`w-4 h-4 rounded-full bg-surface shadow-sm transform transition-transform duration-200 ${additional.showcases ? 'translate-x-4' : 'translate-x-0'}`}></div>
                     </button>
-                    <span className="text-xs font-bold text-slate-700">Витрины</span>
+                    <span className="text-xs font-bold text-slate-300">Витрины</span>
                   </div>
                   <div className="flex items-center gap-3 pt-6">
                     <button
                       type="button"
                       onClick={() => setAdditional({...additional, parking: !additional.parking})}
-                      className={`w-10 h-6 rounded-full p-1 transition-colors duration-200 focus:outline-none ${additional.parking ? 'bg-emerald-500' : 'bg-slate-200'}`}
+                      className={`w-10 h-6 rounded-full p-1 transition-colors duration-200 focus:outline-none ${additional.parking ? 'bg-emerald-500' : 'bg-white/10'}`}
                     >
-                      <div className={`w-4 h-4 rounded-full bg-white shadow-sm transform transition-transform duration-200 ${additional.parking ? 'translate-x-4' : 'translate-x-0'}`}></div>
+                      <div className={`w-4 h-4 rounded-full bg-surface shadow-sm transform transition-transform duration-200 ${additional.parking ? 'translate-x-4' : 'translate-x-0'}`}></div>
                     </button>
-                    <span className="text-xs font-bold text-slate-700">Имеется парковка</span>
+                    <span className="text-xs font-bold text-slate-300">Имеется парковка</span>
                   </div>
                 </div>
               )}
@@ -752,8 +752,8 @@ export default function CreateDeal() {
           </div>
 
           {/* Block 2. Format of Participation */}
-          <div ref={block2Ref} className="bg-white border border-slate-200 rounded-3xl p-8 shadow-sm space-y-6">
-            <h2 className="text-sm font-black uppercase tracking-widest text-slate-900 border-b border-slate-100 pb-4 flex items-center gap-2">
+          <div ref={block2Ref} className="bg-surface border border-line rounded-3xl p-8 shadow-sm space-y-6">
+            <h2 className="text-sm font-black uppercase tracking-widest text-slate-100 border-b border-line pb-4 flex items-center gap-2">
               <span className="w-5 h-5 rounded-full bg-emerald-500/10 text-emerald-600 flex items-center justify-center font-black text-xs font-mono">2</span>
               Формат участия
             </h2>
@@ -768,13 +768,13 @@ export default function CreateDeal() {
                     key={item.id}
                     type="button"
                     onClick={() => setParticipationFormat(item.id)}
-                    className={`text-left p-5 rounded-2xl border transition-all flex gap-4 ${isSelected ? 'border-emerald-500 bg-emerald-500/5 shadow-md shadow-emerald-500/5' : 'border-slate-200 hover:border-slate-400 bg-white'}`}
+                    className={`text-left p-5 rounded-2xl border transition-all flex gap-4 ${isSelected ? 'border-emerald-500 bg-emerald-500/5 shadow-md shadow-emerald-500/5' : 'border-line hover:border-slate-400 bg-surface'}`}
                   >
-                    <div className={`w-10 h-10 rounded-xl flex items-center justify-center shrink-0 ${isSelected ? 'bg-emerald-500 text-white' : 'bg-slate-100 text-slate-500'}`}>
+                    <div className={`w-10 h-10 rounded-xl flex items-center justify-center shrink-0 ${isSelected ? 'bg-emerald-500 text-white' : 'bg-surface-2 text-slate-500'}`}>
                       <IconComponent size={20} />
                     </div>
                     <div>
-                      <h3 className="text-xs font-black uppercase tracking-tight text-slate-900">{item.label}</h3>
+                      <h3 className="text-xs font-black uppercase tracking-tight text-slate-100">{item.label}</h3>
                       <p className="text-[10px] text-slate-400 font-medium leading-relaxed mt-1">{item.desc}</p>
                     </div>
                   </button>
@@ -783,7 +783,7 @@ export default function CreateDeal() {
             </div>
 
             {/* Dynamic Details form nested in Block 2 */}
-            <div className="bg-slate-50 border border-slate-100 rounded-2xl p-6 mt-6">
+            <div className="bg-surface-2 border border-line rounded-2xl p-6 mt-6">
               <h4 className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-4">Детали выбранного формата</h4>
               
               {participationFormat === 'full_ownership' && (
@@ -793,7 +793,7 @@ export default function CreateDeal() {
                     <select 
                       value={participationDetails.ownershipForm || 'физлицо'} 
                       onChange={e => setParticipationDetails({...participationDetails, ownershipForm: e.target.value})}
-                      className="w-full bg-white border border-slate-200 rounded-xl px-4 py-3 text-sm font-bold text-slate-900 focus:outline-none"
+                      className="w-full bg-surface border border-line rounded-xl px-4 py-3 text-sm font-bold text-slate-100 focus:outline-none"
                     >
                       {['физлицо', 'ИП', 'ООО', 'другое'].map(o => <option key={o} value={o}>{o}</option>)}
                     </select>
@@ -802,7 +802,7 @@ export default function CreateDeal() {
                     <label className="text-[10px] font-black uppercase tracking-widest text-slate-400">Доля владения</label>
                     <input 
                       type="text" readOnly value="100%"
-                      className="w-full bg-slate-100 border border-slate-200 rounded-xl px-4 py-3 text-sm font-bold text-slate-500 focus:outline-none font-mono"
+                      className="w-full bg-surface-2 border border-line rounded-xl px-4 py-3 text-sm font-bold text-slate-500 focus:outline-none font-mono"
                     />
                   </div>
                 </div>
@@ -816,7 +816,7 @@ export default function CreateDeal() {
                       type="number" value={participationDetails.sharePercent} 
                       onChange={e => setParticipationDetails({...participationDetails, sharePercent: e.target.value})}
                       placeholder="15"
-                      className="w-full bg-white border border-slate-200 rounded-xl px-4 py-3 text-sm font-bold text-slate-900 focus:outline-none font-mono"
+                      className="w-full bg-surface border border-line rounded-xl px-4 py-3 text-sm font-bold text-slate-100 focus:outline-none font-mono"
                     />
                   </div>
                   <div className="flex flex-col gap-2">
@@ -825,18 +825,18 @@ export default function CreateDeal() {
                       type="text" value={formatNumberString(participationDetails.participantCount)}
                       onChange={e => setParticipationDetails({...participationDetails, participantCount: parseNumberString(e.target.value)})}
                       placeholder="5"
-                      className="w-full bg-white border border-slate-200 rounded-xl px-4 py-3 text-sm font-bold text-slate-900 focus:outline-none font-mono"
+                      className="w-full bg-surface border border-line rounded-xl px-4 py-3 text-sm font-bold text-slate-100 focus:outline-none font-mono"
                     />
                   </div>
                   <div className="flex items-center gap-3 pt-6">
                     <button
                       type="button"
                       onClick={() => setParticipationDetails({...participationDetails, hasAgreement: !participationDetails.hasAgreement})}
-                      className={`w-10 h-6 rounded-full p-1 transition-colors duration-200 focus:outline-none ${participationDetails.hasAgreement ? 'bg-emerald-500' : 'bg-slate-200'}`}
+                      className={`w-10 h-6 rounded-full p-1 transition-colors duration-200 focus:outline-none ${participationDetails.hasAgreement ? 'bg-emerald-500' : 'bg-white/10'}`}
                     >
-                      <div className={`w-4 h-4 rounded-full bg-white shadow-sm transform transition-transform duration-200 ${participationDetails.hasAgreement ? 'translate-x-4' : 'translate-x-0'}`}></div>
+                      <div className={`w-4 h-4 rounded-full bg-surface shadow-sm transform transition-transform duration-200 ${participationDetails.hasAgreement ? 'translate-x-4' : 'translate-x-0'}`}></div>
                     </button>
-                    <span className="text-xs font-bold text-slate-700">Есть соглашение</span>
+                    <span className="text-xs font-bold text-slate-300">Есть соглашение</span>
                   </div>
                 </div>
               )}
@@ -849,7 +849,7 @@ export default function CreateDeal() {
                       type="text" value={participationDetails.companyName}
                       onChange={e => setParticipationDetails({...participationDetails, companyName: e.target.value})}
                       placeholder="ООО «Х7 Инвест»"
-                      className="w-full bg-white border border-slate-200 rounded-xl px-4 py-3 text-sm font-bold text-slate-900 focus:outline-none"
+                      className="w-full bg-surface border border-line rounded-xl px-4 py-3 text-sm font-bold text-slate-100 focus:outline-none"
                     />
                   </div>
                   <div className="flex flex-col gap-2">
@@ -858,7 +858,7 @@ export default function CreateDeal() {
                       type="number" value={participationDetails.companySharePercent}
                       onChange={e => setParticipationDetails({...participationDetails, companySharePercent: e.target.value})}
                       placeholder="25"
-                      className="w-full bg-white border border-slate-200 rounded-xl px-4 py-3 text-sm font-bold text-slate-900 focus:outline-none font-mono"
+                      className="w-full bg-surface border border-line rounded-xl px-4 py-3 text-sm font-bold text-slate-100 focus:outline-none font-mono"
                     />
                   </div>
                   <div className="flex flex-col gap-2">
@@ -866,7 +866,7 @@ export default function CreateDeal() {
                     <select 
                       value={participationDetails.participationType || 'доля в ООО'}
                       onChange={e => setParticipationDetails({...participationDetails, participationType: e.target.value})}
-                      className="w-full bg-white border border-slate-200 rounded-xl px-4 py-3 text-sm font-bold text-slate-900 focus:outline-none"
+                      className="w-full bg-surface border border-line rounded-xl px-4 py-3 text-sm font-bold text-slate-100 focus:outline-none"
                     >
                       <option value="доля в ООО">Доля в ООО</option>
                       <option value="акции АО">Акции АО</option>
@@ -877,11 +877,11 @@ export default function CreateDeal() {
                     <button
                       type="button"
                       onClick={() => setParticipationDetails({...participationDetails, companyOwnsObject: !participationDetails.companyOwnsObject})}
-                      className={`w-10 h-6 rounded-full p-1 transition-colors duration-200 focus:outline-none ${participationDetails.companyOwnsObject ? 'bg-emerald-500' : 'bg-slate-200'}`}
+                      className={`w-10 h-6 rounded-full p-1 transition-colors duration-200 focus:outline-none ${participationDetails.companyOwnsObject ? 'bg-emerald-500' : 'bg-white/10'}`}
                     >
-                      <div className={`w-4 h-4 rounded-full bg-white shadow-sm transform transition-transform duration-200 ${participationDetails.companyOwnsObject ? 'translate-x-4' : 'translate-x-0'}`}></div>
+                      <div className={`w-4 h-4 rounded-full bg-surface shadow-sm transform transition-transform duration-200 ${participationDetails.companyOwnsObject ? 'translate-x-4' : 'translate-x-0'}`}></div>
                     </button>
-                    <span className="text-xs font-bold text-slate-700">Компания владеет объектом</span>
+                    <span className="text-xs font-bold text-slate-300">Компания владеет объектом</span>
                   </div>
                 </div>
               )}
@@ -894,7 +894,7 @@ export default function CreateDeal() {
                       type="text" value={participationDetails.fundName}
                       onChange={e => setParticipationDetails({...participationDetails, fundName: e.target.value})}
                       placeholder="ЗПИФ «Коммерческая аренда»"
-                      className="w-full bg-white border border-slate-200 rounded-xl px-4 py-3 text-sm font-bold text-slate-900 focus:outline-none"
+                      className="w-full bg-surface border border-line rounded-xl px-4 py-3 text-sm font-bold text-slate-100 focus:outline-none"
                     />
                   </div>
                   <div className="flex flex-col gap-2">
@@ -903,7 +903,7 @@ export default function CreateDeal() {
                       type="text" value={participationDetails.managementCompany}
                       onChange={e => setParticipationDetails({...participationDetails, managementCompany: e.target.value})}
                       placeholder="УК «Арт Финанс»"
-                      className="w-full bg-white border border-slate-200 rounded-xl px-4 py-3 text-sm font-bold text-slate-900 focus:outline-none"
+                      className="w-full bg-surface border border-line rounded-xl px-4 py-3 text-sm font-bold text-slate-100 focus:outline-none"
                     />
                   </div>
                   <div className="flex flex-col gap-2">
@@ -912,7 +912,7 @@ export default function CreateDeal() {
                       type="text" value={formatNumberString(participationDetails.unitCount)}
                       onChange={e => setParticipationDetails({...participationDetails, unitCount: parseNumberString(e.target.value)})}
                       placeholder="150"
-                      className="w-full bg-white border border-slate-200 rounded-xl px-4 py-3 text-sm font-bold text-slate-900 focus:outline-none font-mono"
+                      className="w-full bg-surface border border-line rounded-xl px-4 py-3 text-sm font-bold text-slate-100 focus:outline-none font-mono"
                     />
                   </div>
                   <div className="flex flex-col gap-2">
@@ -921,7 +921,7 @@ export default function CreateDeal() {
                       type="text" value={formatNumberString(participationDetails.unitPrice)}
                       onChange={e => setParticipationDetails({...participationDetails, unitPrice: parseNumberString(e.target.value)})}
                       placeholder="10 000"
-                      className="w-full bg-white border border-slate-200 rounded-xl px-4 py-3 text-sm font-bold text-slate-900 focus:outline-none font-mono"
+                      className="w-full bg-surface border border-line rounded-xl px-4 py-3 text-sm font-bold text-slate-100 focus:outline-none font-mono"
                     />
                   </div>
                   <div className="flex flex-col gap-2">
@@ -930,7 +930,7 @@ export default function CreateDeal() {
                       type="number" value={participationDetails.fundSharePercent}
                       onChange={e => setParticipationDetails({...participationDetails, fundSharePercent: e.target.value})}
                       placeholder="5"
-                      className="w-full bg-white border border-slate-200 rounded-xl px-4 py-3 text-sm font-bold text-slate-900 focus:outline-none font-mono"
+                      className="w-full bg-surface border border-line rounded-xl px-4 py-3 text-sm font-bold text-slate-100 focus:outline-none font-mono"
                     />
                   </div>
                 </div>
@@ -948,7 +948,7 @@ export default function CreateDeal() {
                         setOwnMoney(val); // set own money automatically
                       }}
                       placeholder="5 000 000"
-                      className="w-full bg-white border border-slate-200 rounded-xl px-4 py-3 text-sm font-bold text-slate-900 focus:outline-none font-mono"
+                      className="w-full bg-surface border border-line rounded-xl px-4 py-3 text-sm font-bold text-slate-100 focus:outline-none font-mono"
                     />
                   </div>
                   <div className="flex flex-col gap-2">
@@ -957,7 +957,7 @@ export default function CreateDeal() {
                       type="number" value={participationDetails.annualRate}
                       onChange={e => setParticipationDetails({...participationDetails, annualRate: e.target.value})}
                       placeholder="18"
-                      className="w-full bg-white border border-slate-200 rounded-xl px-4 py-3 text-sm font-bold text-slate-900 focus:outline-none font-mono"
+                      className="w-full bg-surface border border-line rounded-xl px-4 py-3 text-sm font-bold text-slate-100 focus:outline-none font-mono"
                     />
                   </div>
                   <div className="flex flex-col gap-2">
@@ -966,7 +966,7 @@ export default function CreateDeal() {
                       type="text" value={formatNumberString(participationDetails.loanTermMonths)}
                       onChange={e => setParticipationDetails({...participationDetails, loanTermMonths: parseNumberString(e.target.value)})}
                       placeholder="12"
-                      className="w-full bg-white border border-slate-200 rounded-xl px-4 py-3 text-sm font-bold text-slate-900 focus:outline-none font-mono"
+                      className="w-full bg-surface border border-line rounded-xl px-4 py-3 text-sm font-bold text-slate-100 focus:outline-none font-mono"
                     />
                   </div>
                   <div className="flex flex-col gap-2">
@@ -975,14 +975,14 @@ export default function CreateDeal() {
                       type="text" value={formatNumberString(participationDetails.collateralAppraisedValue)}
                       onChange={e => setParticipationDetails({...participationDetails, collateralAppraisedValue: parseNumberString(e.target.value)})}
                       placeholder="10 000 000"
-                      className="w-full bg-white border border-slate-200 rounded-xl px-4 py-3 text-sm font-bold text-slate-900 focus:outline-none font-mono"
+                      className="w-full bg-surface border border-line rounded-xl px-4 py-3 text-sm font-bold text-slate-100 focus:outline-none font-mono"
                     />
                   </div>
                   <div className="flex flex-col gap-2">
                     <label className="text-[10px] font-black uppercase tracking-widest text-slate-400">LTV (%)</label>
                     <input 
                       type="text" readOnly value={calculatedLtv ? `${calculatedLtv}%` : '—'}
-                      className="w-full bg-slate-100 border border-slate-200 rounded-xl px-4 py-3 text-sm font-bold text-slate-500 focus:outline-none font-mono"
+                      className="w-full bg-surface-2 border border-line rounded-xl px-4 py-3 text-sm font-bold text-slate-500 focus:outline-none font-mono"
                     />
                   </div>
                   <div className="flex flex-col gap-2">
@@ -990,7 +990,7 @@ export default function CreateDeal() {
                     <select 
                       value={participationDetails.payoutFrequency || 'ежемесячно'}
                       onChange={e => setParticipationDetails({...participationDetails, payoutFrequency: e.target.value})}
-                      className="w-full bg-white border border-slate-200 rounded-xl px-4 py-3 text-sm font-bold text-slate-900 focus:outline-none"
+                      className="w-full bg-surface border border-line rounded-xl px-4 py-3 text-sm font-bold text-slate-100 focus:outline-none"
                     >
                       {['ежемесячно', 'ежеквартально', 'в конце срока', 'другое'].map(f => <option key={f} value={f}>{f}</option>)}
                     </select>
@@ -1002,7 +1002,7 @@ export default function CreateDeal() {
                         type="text" value={participationDetails.extraCollateral}
                         onChange={e => setParticipationDetails({...participationDetails, extraCollateral: e.target.value})}
                         placeholder="Личное поручительство бенефициара, залог оборудования..."
-                        className="w-full bg-white border border-slate-200 rounded-xl px-4 py-3 text-sm font-bold text-slate-900 focus:outline-none"
+                        className="w-full bg-surface border border-line rounded-xl px-4 py-3 text-sm font-bold text-slate-100 focus:outline-none"
                       />
                     </div>
                   )}
@@ -1021,7 +1021,7 @@ export default function CreateDeal() {
                         setOwnMoney(val);
                       }}
                       placeholder="3 000 000"
-                      className="w-full bg-white border border-slate-200 rounded-xl px-4 py-3 text-sm font-bold text-slate-900 focus:outline-none font-mono"
+                      className="w-full bg-surface border border-line rounded-xl px-4 py-3 text-sm font-bold text-slate-100 focus:outline-none font-mono"
                     />
                   </div>
                   <div className="flex flex-col gap-2">
@@ -1030,7 +1030,7 @@ export default function CreateDeal() {
                       type="number" value={participationDetails.expectedYield}
                       onChange={e => setParticipationDetails({...participationDetails, expectedYield: e.target.value})}
                       placeholder="22"
-                      className="w-full bg-white border border-slate-200 rounded-xl px-4 py-3 text-sm font-bold text-slate-900 focus:outline-none font-mono"
+                      className="w-full bg-surface border border-line rounded-xl px-4 py-3 text-sm font-bold text-slate-100 focus:outline-none font-mono"
                     />
                   </div>
                   <div className="flex flex-col gap-2">
@@ -1039,7 +1039,7 @@ export default function CreateDeal() {
                       type="text" value={formatNumberString(participationDetails.loanTermMonths)}
                       onChange={e => setParticipationDetails({...participationDetails, loanTermMonths: parseNumberString(e.target.value)})}
                       placeholder="24"
-                      className="w-full bg-white border border-slate-200 rounded-xl px-4 py-3 text-sm font-bold text-slate-900 focus:outline-none font-mono"
+                      className="w-full bg-surface border border-line rounded-xl px-4 py-3 text-sm font-bold text-slate-100 focus:outline-none font-mono"
                     />
                   </div>
                   <div className="flex flex-col gap-2">
@@ -1047,7 +1047,7 @@ export default function CreateDeal() {
                     <select 
                       value={participationDetails.payoutMechanic || 'фикс'}
                       onChange={e => setParticipationDetails({...participationDetails, payoutMechanic: e.target.value})}
-                      className="w-full bg-white border border-slate-200 rounded-xl px-4 py-3 text-sm font-bold text-slate-900 focus:outline-none"
+                      className="w-full bg-surface border border-line rounded-xl px-4 py-3 text-sm font-bold text-slate-100 focus:outline-none"
                     >
                       <option value="фикс">Фикс</option>
                       <option value="% от прибыли">% от прибыли</option>
@@ -1058,11 +1058,11 @@ export default function CreateDeal() {
                     <button
                       type="button"
                       onClick={() => setParticipationDetails({...participationDetails, hasAgreement: !participationDetails.hasAgreement})}
-                      className={`w-10 h-6 rounded-full p-1 transition-colors duration-200 focus:outline-none ${participationDetails.hasAgreement ? 'bg-emerald-500' : 'bg-slate-200'}`}
+                      className={`w-10 h-6 rounded-full p-1 transition-colors duration-200 focus:outline-none ${participationDetails.hasAgreement ? 'bg-emerald-500' : 'bg-white/10'}`}
                     >
-                      <div className={`w-4 h-4 rounded-full bg-white shadow-sm transform transition-transform duration-200 ${participationDetails.hasAgreement ? 'translate-x-4' : 'translate-x-0'}`}></div>
+                      <div className={`w-4 h-4 rounded-full bg-surface shadow-sm transform transition-transform duration-200 ${participationDetails.hasAgreement ? 'translate-x-4' : 'translate-x-0'}`}></div>
                     </button>
-                    <span className="text-xs font-bold text-slate-700">Есть обеспечение</span>
+                    <span className="text-xs font-bold text-slate-300">Есть обеспечение</span>
                   </div>
                 </div>
               )}
@@ -1079,7 +1079,7 @@ export default function CreateDeal() {
                         setOwnMoney(val);
                       }}
                       placeholder="2 500 000"
-                      className="w-full bg-white border border-slate-200 rounded-xl px-4 py-3 text-sm font-bold text-slate-900 focus:outline-none font-mono"
+                      className="w-full bg-surface border border-line rounded-xl px-4 py-3 text-sm font-bold text-slate-100 focus:outline-none font-mono"
                     />
                   </div>
                   <div className="flex flex-col gap-2">
@@ -1088,7 +1088,7 @@ export default function CreateDeal() {
                       type="number" value={participationDetails.sharePercent}
                       onChange={e => setParticipationDetails({...participationDetails, sharePercent: e.target.value})}
                       placeholder="10"
-                      className="w-full bg-white border border-slate-200 rounded-xl px-4 py-3 text-sm font-bold text-slate-900 focus:outline-none font-mono"
+                      className="w-full bg-surface border border-line rounded-xl px-4 py-3 text-sm font-bold text-slate-100 focus:outline-none font-mono"
                     />
                   </div>
                   <div className="flex flex-col gap-2">
@@ -1097,7 +1097,7 @@ export default function CreateDeal() {
                       type="text" value={participationDetails.projectOperator}
                       onChange={e => setParticipationDetails({...participationDetails, projectOperator: e.target.value})}
                       placeholder="X7 Syndicate"
-                      className="w-full bg-white border border-slate-200 rounded-xl px-4 py-3 text-sm font-bold text-slate-900 focus:outline-none"
+                      className="w-full bg-surface border border-line rounded-xl px-4 py-3 text-sm font-bold text-slate-100 focus:outline-none"
                     />
                   </div>
                   <div className="flex flex-col gap-2">
@@ -1106,7 +1106,7 @@ export default function CreateDeal() {
                       type="text" value={formatNumberString(participationDetails.participantCount)}
                       onChange={e => setParticipationDetails({...participationDetails, participantCount: parseNumberString(e.target.value)})}
                       placeholder="8"
-                      className="w-full bg-white border border-slate-200 rounded-xl px-4 py-3 text-sm font-bold text-slate-900 focus:outline-none font-mono"
+                      className="w-full bg-surface border border-line rounded-xl px-4 py-3 text-sm font-bold text-slate-100 focus:outline-none font-mono"
                     />
                   </div>
                   <div className="flex flex-col gap-2">
@@ -1115,18 +1115,18 @@ export default function CreateDeal() {
                       type="text" value={participationDetails.profitDistributionModel}
                       onChange={e => setParticipationDetails({...participationDetails, profitDistributionModel: e.target.value})}
                       placeholder="70% инвесторам / 30% GP"
-                      className="w-full bg-white border border-slate-200 rounded-xl px-4 py-3 text-sm font-bold text-slate-900 focus:outline-none"
+                      className="w-full bg-surface border border-line rounded-xl px-4 py-3 text-sm font-bold text-slate-100 focus:outline-none"
                     />
                   </div>
                   <div className="flex items-center gap-3 pt-6">
                     <button
                       type="button"
                       onClick={() => setParticipationDetails({...participationDetails, hasContract: !participationDetails.hasContract})}
-                      className={`w-10 h-6 rounded-full p-1 transition-colors duration-200 focus:outline-none ${participationDetails.hasContract ? 'bg-emerald-500' : 'bg-slate-200'}`}
+                      className={`w-10 h-6 rounded-full p-1 transition-colors duration-200 focus:outline-none ${participationDetails.hasContract ? 'bg-emerald-500' : 'bg-white/10'}`}
                     >
-                      <div className={`w-4 h-4 rounded-full bg-white shadow-sm transform transition-transform duration-200 ${participationDetails.hasContract ? 'translate-x-4' : 'translate-x-0'}`}></div>
+                      <div className={`w-4 h-4 rounded-full bg-surface shadow-sm transform transition-transform duration-200 ${participationDetails.hasContract ? 'translate-x-4' : 'translate-x-0'}`}></div>
                     </button>
-                    <span className="text-xs font-bold text-slate-700">Есть договор</span>
+                    <span className="text-xs font-bold text-slate-300">Есть договор</span>
                   </div>
                 </div>
               )}
@@ -1134,8 +1134,8 @@ export default function CreateDeal() {
           </div>
 
           {/* Block 3. Financial Parameters */}
-          <div ref={block3Ref} className="bg-white border border-slate-200 rounded-3xl p-8 shadow-sm space-y-8">
-            <h2 className="text-sm font-black uppercase tracking-widest text-slate-900 border-b border-slate-100 pb-4 flex items-center gap-2">
+          <div ref={block3Ref} className="bg-surface border border-line rounded-3xl p-8 shadow-sm space-y-8">
+            <h2 className="text-sm font-black uppercase tracking-widest text-slate-100 border-b border-line pb-4 flex items-center gap-2">
               <span className="w-5 h-5 rounded-full bg-emerald-500/10 text-emerald-600 flex items-center justify-center font-black text-xs font-mono">3</span>
               Финансовые параметры
             </h2>
@@ -1149,7 +1149,7 @@ export default function CreateDeal() {
                   <label className="text-[10px] font-black uppercase tracking-widest text-slate-400">Валюта</label>
                   <select 
                     value={currency} onChange={e => setCurrency(e.target.value)}
-                    className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-sm font-bold text-slate-900 focus:outline-none"
+                    className="w-full bg-surface-2 border border-line rounded-xl px-4 py-3 text-sm font-bold text-slate-100 focus:outline-none"
                   >
                     <option value="RUB">RUB (₽)</option>
                     <option value="USD">USD ($)</option>
@@ -1162,7 +1162,7 @@ export default function CreateDeal() {
                   <label className="text-[10px] font-black uppercase tracking-widest text-slate-400">Дата покупки / входа</label>
                   <input 
                     type="date" value={purchaseDate} onChange={e => setPurchaseDate(e.target.value)}
-                    className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-sm font-bold text-slate-900 focus:outline-none font-mono"
+                    className="w-full bg-surface-2 border border-line rounded-xl px-4 py-3 text-sm font-bold text-slate-100 focus:outline-none font-mono"
                   />
                 </div>
 
@@ -1172,7 +1172,7 @@ export default function CreateDeal() {
                     type="text" value={formatNumberString(performance.plannedTermMonths)} 
                     onChange={e => setPerformance({...performance, plannedTermMonths: parseNumberString(e.target.value)})}
                     placeholder="24"
-                    className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-sm font-bold text-slate-900 focus:outline-none font-mono"
+                    className="w-full bg-surface-2 border border-line rounded-xl px-4 py-3 text-sm font-bold text-slate-100 focus:outline-none font-mono"
                   />
                 </div>
 
@@ -1181,7 +1181,7 @@ export default function CreateDeal() {
                   <input 
                     type="text" value={formatNumberString(ownMoney)} onChange={e => setOwnMoney(parseNumberString(e.target.value))}
                     placeholder="10 000 000"
-                    className={`w-full bg-slate-50 border rounded-xl px-4 py-3 text-sm font-bold text-slate-900 focus:outline-none font-mono ${showValidation && validationErrors.ownMoney ? 'border-rose-500' : 'border-slate-200'}`}
+                    className={`w-full bg-surface-2 border rounded-xl px-4 py-3 text-sm font-bold text-slate-100 focus:outline-none font-mono ${showValidation && validationErrors.ownMoney ? 'border-rose-500' : 'border-line'}`}
                   />
                   {showValidation && validationErrors.ownMoney && (
                     <span className="text-[10px] text-rose-500 font-bold">{validationErrors.ownMoney}</span>
@@ -1193,7 +1193,7 @@ export default function CreateDeal() {
                   <input 
                     type="text" value={formatNumberString(creditMoney)} onChange={e => setCreditMoney(parseNumberString(e.target.value))}
                     placeholder="0"
-                    className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-sm font-bold text-slate-900 focus:outline-none font-mono"
+                    className="w-full bg-surface-2 border border-line rounded-xl px-4 py-3 text-sm font-bold text-slate-100 focus:outline-none font-mono"
                   />
                 </div>
 
@@ -1201,7 +1201,7 @@ export default function CreateDeal() {
                   <label className="text-[10px] font-black uppercase tracking-widest text-slate-400">Сумма инвестиций (Auto)</label>
                   <input 
                     type="text" readOnly value={formatCurrency(metrics.investmentSum)}
-                    className="w-full bg-slate-100 border border-slate-200 rounded-xl px-4 py-3 text-sm font-bold text-slate-500 focus:outline-none font-mono"
+                    className="w-full bg-surface-2 border border-line rounded-xl px-4 py-3 text-sm font-bold text-slate-500 focus:outline-none font-mono"
                   />
                 </div>
 
@@ -1212,7 +1212,7 @@ export default function CreateDeal() {
                       <input 
                         type="text" value={formatNumberString(propertyPrice)} onChange={e => setPropertyPrice(parseNumberString(e.target.value))}
                         placeholder="10 000 000"
-                        className={`w-full bg-slate-50 border rounded-xl px-4 py-3 text-sm font-bold text-slate-900 focus:outline-none font-mono ${showValidation && validationErrors.propertyPrice ? 'border-rose-500' : 'border-slate-200'}`}
+                        className={`w-full bg-surface-2 border rounded-xl px-4 py-3 text-sm font-bold text-slate-100 focus:outline-none font-mono ${showValidation && validationErrors.propertyPrice ? 'border-rose-500' : 'border-line'}`}
                       />
                       {showValidation && validationErrors.propertyPrice && (
                         <span className="text-[10px] text-rose-500 font-bold">{validationErrors.propertyPrice}</span>
@@ -1223,7 +1223,7 @@ export default function CreateDeal() {
                       <label className="text-[10px] font-black uppercase tracking-widest text-slate-400">Цена объекта (Auto)</label>
                       <input 
                         type="text" readOnly value={formatCurrency(metrics.objectPrice)}
-                        className="w-full bg-slate-100 border border-slate-200 rounded-xl px-4 py-3 text-sm font-bold text-slate-500 focus:outline-none font-mono"
+                        className="w-full bg-surface-2 border border-line rounded-xl px-4 py-3 text-sm font-bold text-slate-500 focus:outline-none font-mono"
                       />
                     </>
                   )}
@@ -1233,13 +1233,13 @@ export default function CreateDeal() {
                   <label className="text-[10px] font-black uppercase tracking-widest text-slate-400">Цена объекта за м² (Auto)</label>
                   <input 
                     type="text" readOnly value={pricePerSqm > 0 ? `${formatNumberString(pricePerSqm)} ${currency === 'RUB' ? '₽' : currency === 'USD' ? '$' : currency === 'EUR' ? '€' : 'AED'}/м²` : '—'}
-                    className="w-full bg-slate-100 border border-slate-200 rounded-xl px-4 py-3 text-sm font-bold text-slate-500 focus:outline-none font-mono"
+                    className="w-full bg-surface-2 border border-line rounded-xl px-4 py-3 text-sm font-bold text-slate-500 focus:outline-none font-mono"
                   />
                 </div>
               </div>
 
               {/* Dynamic Extra Expenses */}
-              <div className="pt-4 border-t border-slate-100 space-y-3">
+              <div className="pt-4 border-t border-line space-y-3">
                 <div className="flex justify-between items-center">
                   <span className="text-[10px] font-black uppercase tracking-widest text-slate-400">Дополнительные расходы на сделку</span>
                   <button 
@@ -1256,7 +1256,7 @@ export default function CreateDeal() {
                       <select
                         value={exp.category}
                         onChange={e => updateExtraExpense(exp.id, 'category', e.target.value)}
-                        className="bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-xs font-bold text-slate-700 focus:outline-none"
+                        className="bg-surface-2 border border-line rounded-xl px-3 py-2 text-xs font-bold text-slate-300 focus:outline-none"
                       >
                         {['Комиссия брокера', 'Госпошлины', 'Нотариус', 'Оценка', 'Страхование', 'Юридическая проверка', 'Ремонт/подготовка', 'Прочие расходы'].map(cat => (
                           <option key={cat} value={cat}>{cat}</option>
@@ -1266,11 +1266,11 @@ export default function CreateDeal() {
                         type="text" value={exp.amount === 0 ? '' : formatNumberString(exp.amount)}
                         onChange={e => updateExtraExpense(exp.id, 'amount', parseNumberString(e.target.value))}
                         placeholder="Сумма"
-                        className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-xs font-bold text-slate-900 focus:outline-none font-mono"
+                        className="w-full bg-surface-2 border border-line rounded-xl px-3 py-2 text-xs font-bold text-slate-100 focus:outline-none font-mono"
                       />
                       <button 
                         type="button" onClick={() => removeExtraExpense(exp.id)}
-                        className="p-2 text-slate-400 hover:text-rose-500 hover:bg-rose-50 rounded-xl transition-all"
+                        className="p-2 text-slate-400 hover:text-rose-500 hover:bg-rose-500/10 rounded-xl transition-all"
                       >
                         <Trash2 size={16} />
                       </button>
@@ -1282,7 +1282,7 @@ export default function CreateDeal() {
 
             {/* 3.2 Кредит */}
             {Number(creditMoney) > 0 && (
-              <div className="space-y-4 border-t border-slate-100 pt-6">
+              <div className="space-y-4 border-t border-line pt-6">
                 <h3 className="text-xs font-black uppercase tracking-widest text-emerald-500">3.2. Данные по кредиту</h3>
                 
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
@@ -1291,7 +1291,7 @@ export default function CreateDeal() {
                     <input 
                       type="text" value={formatNumberString(loan.downPayment)} onChange={e => setLoan({...loan, downPayment: parseNumberString(e.target.value)})}
                       placeholder="3 000 000"
-                      className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-sm font-bold text-slate-900 focus:outline-none font-mono"
+                      className="w-full bg-surface-2 border border-line rounded-xl px-4 py-3 text-sm font-bold text-slate-100 focus:outline-none font-mono"
                     />
                   </div>
 
@@ -1300,7 +1300,7 @@ export default function CreateDeal() {
                     <input 
                       type="number" value={loan.annualRate} onChange={e => setLoan({...loan, annualRate: e.target.value})}
                       placeholder="12"
-                      className={`w-full bg-slate-50 border rounded-xl px-4 py-3 text-sm font-bold text-slate-900 focus:outline-none font-mono ${showValidation && validationErrors.loanAnnualRate ? 'border-rose-500' : 'border-slate-200'}`}
+                      className={`w-full bg-surface-2 border rounded-xl px-4 py-3 text-sm font-bold text-slate-100 focus:outline-none font-mono ${showValidation && validationErrors.loanAnnualRate ? 'border-rose-500' : 'border-line'}`}
                     />
                     {showValidation && validationErrors.loanAnnualRate && (
                       <span className="text-[10px] text-rose-500 font-bold">{validationErrors.loanAnnualRate}</span>
@@ -1312,7 +1312,7 @@ export default function CreateDeal() {
                     <input 
                       type="text" value={formatNumberString(loan.termMonths)} onChange={e => setLoan({...loan, termMonths: parseNumberString(e.target.value)})}
                       placeholder="120"
-                      className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-sm font-bold text-slate-900 focus:outline-none font-mono"
+                      className="w-full bg-surface-2 border border-line rounded-xl px-4 py-3 text-sm font-bold text-slate-100 focus:outline-none font-mono"
                     />
                   </div>
 
@@ -1321,7 +1321,7 @@ export default function CreateDeal() {
                     <input 
                       type="text" value={formatNumberString(loan.monthlyPayment)} onChange={e => setLoan({...loan, monthlyPayment: parseNumberString(e.target.value)})}
                       placeholder="75 000"
-                      className={`w-full bg-slate-50 border rounded-xl px-4 py-3 text-sm font-bold text-slate-900 focus:outline-none font-mono ${showValidation && (validationErrors.loanMonthlyPayment || validationErrors.loanInterest) ? 'border-rose-500' : 'border-slate-200'}`}
+                      className={`w-full bg-surface-2 border rounded-xl px-4 py-3 text-sm font-bold text-slate-100 focus:outline-none font-mono ${showValidation && (validationErrors.loanMonthlyPayment || validationErrors.loanInterest) ? 'border-rose-500' : 'border-line'}`}
                     />
                     {showValidation && (validationErrors.loanMonthlyPayment || validationErrors.loanInterest) && (
                       <span className="text-[10px] text-rose-500 font-bold">{validationErrors.loanMonthlyPayment || validationErrors.loanInterest}</span>
@@ -1332,7 +1332,7 @@ export default function CreateDeal() {
                     <label className="text-[10px] font-black uppercase tracking-widest text-slate-400">Тип платежа</label>
                     <select 
                       value={loan.paymentType} onChange={e => setLoan({...loan, paymentType: e.target.value})}
-                      className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-sm font-bold text-slate-900 focus:outline-none cursor-pointer"
+                      className="w-full bg-surface-2 border border-line rounded-xl px-4 py-3 text-sm font-bold text-slate-100 focus:outline-none cursor-pointer"
                     >
                       <option value="Аннуитетный">Аннуитетный</option>
                       <option value="Дифференцированный">Дифференцированный</option>
@@ -1344,7 +1344,7 @@ export default function CreateDeal() {
                     <input 
                       type="text" value={formatNumberString(loan.currentDebtBalance)} onChange={e => setLoan({...loan, currentDebtBalance: parseNumberString(e.target.value)})}
                       placeholder="9 500 000"
-                      className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-sm font-bold text-slate-900 focus:outline-none font-mono"
+                      className="w-full bg-surface-2 border border-line rounded-xl px-4 py-3 text-sm font-bold text-slate-100 focus:outline-none font-mono"
                     />
                   </div>
 
@@ -1352,14 +1352,14 @@ export default function CreateDeal() {
                     <label className="text-[10px] font-black uppercase tracking-widest text-slate-400">Дата начала кредита</label>
                     <input 
                       type="date" value={loan.startDate} onChange={e => setLoan({...loan, startDate: e.target.value})}
-                      className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-sm font-bold text-slate-900 focus:outline-none font-mono"
+                      className="w-full bg-surface-2 border border-line rounded-xl px-4 py-3 text-sm font-bold text-slate-100 focus:outline-none font-mono"
                     />
                   </div>
                 </div>
 
                 {/* Validation message */}
                 {showValidation && validationErrors.loanInterest && (
-                  <div className="flex items-center gap-2 p-4 bg-rose-50 border border-rose-100 rounded-xl text-rose-700 text-xs font-bold">
+                  <div className="flex items-center gap-2 p-4 bg-rose-500/10 border border-rose-100 rounded-xl text-rose-700 text-xs font-bold">
                     <AlertTriangle size={16} />
                     {validationErrors.loanInterest}
                   </div>
@@ -1369,17 +1369,17 @@ export default function CreateDeal() {
 
             {/* 3.3 Арендаторы (Income) */}
             {!(participationFormat === 'non_collateral_loan' || participationFormat === 'zpif_units') && (
-              <div className="space-y-4 border-t border-slate-100 pt-6">
+              <div className="space-y-4 border-t border-line pt-6">
                 <div className="flex justify-between items-center">
                   <h3 className="text-xs font-black uppercase tracking-widest text-emerald-500">3.3. Данные по аренде (Доходы)</h3>
                 </div>
 
                 <div className="space-y-4">
                   {tenants.map((t, idx) => (
-                    <div key={t.id} className="border border-slate-200 rounded-2xl p-5 space-y-4 relative bg-slate-50/50">
+                    <div key={t.id} className="border border-line rounded-2xl p-5 space-y-4 relative bg-surface-2/50">
                       <button 
                         type="button" onClick={() => removeTenant(t.id)}
-                        className="absolute top-4 right-4 p-2 text-slate-400 hover:text-rose-500 hover:bg-rose-50 rounded-xl transition-all"
+                        className="absolute top-4 right-4 p-2 text-slate-400 hover:text-rose-500 hover:bg-rose-500/10 rounded-xl transition-all"
                         title="Удалить арендатора"
                       >
                         <Trash2 size={16} />
@@ -1392,7 +1392,7 @@ export default function CreateDeal() {
                           <input 
                             type="text" value={t.name} onChange={e => updateTenant(t.id, 'name', e.target.value)}
                             placeholder="ООО «ВкусВилл»"
-                            className="w-full bg-white border border-slate-200 rounded-xl px-4 py-3 text-sm font-bold text-slate-900 focus:outline-none"
+                            className="w-full bg-surface border border-line rounded-xl px-4 py-3 text-sm font-bold text-slate-100 focus:outline-none"
                           />
                         </div>
                         <div className="flex flex-col gap-2">
@@ -1400,7 +1400,7 @@ export default function CreateDeal() {
                           <input 
                             type="text" value={formatNumberString(t.areaSqm)} onChange={e => updateTenant(t.id, 'areaSqm', parseNumberString(e.target.value))}
                             placeholder="85"
-                            className="w-full bg-white border border-slate-200 rounded-xl px-4 py-3 text-sm font-bold text-slate-900 focus:outline-none font-mono"
+                            className="w-full bg-surface border border-line rounded-xl px-4 py-3 text-sm font-bold text-slate-100 focus:outline-none font-mono"
                           />
                         </div>
                         <div className="flex flex-col gap-2">
@@ -1408,7 +1408,7 @@ export default function CreateDeal() {
                           <input 
                             type="text" value={formatNumberString(t.monthlyRent)} onChange={e => updateTenant(t.id, 'monthlyRent', parseNumberString(e.target.value))}
                             placeholder="150 000"
-                            className="w-full bg-white border border-slate-200 rounded-xl px-4 py-3 text-sm font-bold text-slate-900 focus:outline-none font-mono"
+                            className="w-full bg-surface border border-line rounded-xl px-4 py-3 text-sm font-bold text-slate-100 focus:outline-none font-mono"
                           />
                         </div>
                         
@@ -1419,21 +1419,21 @@ export default function CreateDeal() {
                             type="text" readOnly value={formatNumberString(t.ratePerSqm)}
                             placeholder="Аренда ÷ площадь"
                             title="Рассчитывается автоматически: месячная аренда ÷ площадь"
-                            className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-sm font-bold text-slate-500 focus:outline-none font-mono cursor-not-allowed"
+                            className="w-full bg-surface-2 border border-line rounded-xl px-4 py-3 text-sm font-bold text-slate-500 focus:outline-none font-mono cursor-not-allowed"
                           />
                         </div>
                         <div className="flex flex-col gap-2">
                           <label className="text-[10px] font-black uppercase tracking-widest text-slate-400">Дата начала договора</label>
                           <input 
                             type="date" value={t.startDate} onChange={e => updateTenant(t.id, 'startDate', e.target.value)}
-                            className="w-full bg-white border border-slate-200 rounded-xl px-4 py-3 text-sm font-bold text-slate-900 focus:outline-none font-mono"
+                            className="w-full bg-surface border border-line rounded-xl px-4 py-3 text-sm font-bold text-slate-100 focus:outline-none font-mono"
                           />
                         </div>
                         <div className="flex flex-col gap-2">
                           <label className="text-[10px] font-black uppercase tracking-widest text-slate-400">Дата окончания договора</label>
                           <input 
                             type="date" value={t.endDate} onChange={e => updateTenant(t.id, 'endDate', e.target.value)}
-                            className="w-full bg-white border border-slate-200 rounded-xl px-4 py-3 text-sm font-bold text-slate-900 focus:outline-none font-mono"
+                            className="w-full bg-surface border border-line rounded-xl px-4 py-3 text-sm font-bold text-slate-100 focus:outline-none font-mono"
                           />
                         </div>
                         <div className="flex flex-col gap-2">
@@ -1441,7 +1441,7 @@ export default function CreateDeal() {
                           <input 
                             type="number" value={t.indexationPercent} onChange={e => updateTenant(t.id, 'indexationPercent', e.target.value)}
                             placeholder="5"
-                            className="w-full bg-white border border-slate-200 rounded-xl px-4 py-3 text-sm font-bold text-slate-900 focus:outline-none font-mono"
+                            className="w-full bg-surface border border-line rounded-xl px-4 py-3 text-sm font-bold text-slate-100 focus:outline-none font-mono"
                           />
                         </div>
                         <div className="flex flex-col gap-2">
@@ -1449,7 +1449,7 @@ export default function CreateDeal() {
                           <input 
                             type="text" value={formatNumberString(t.securityDeposit)} onChange={e => updateTenant(t.id, 'securityDeposit', parseNumberString(e.target.value))}
                             placeholder="300 000"
-                            className="w-full bg-white border border-slate-200 rounded-xl px-4 py-3 text-sm font-bold text-slate-900 focus:outline-none font-mono"
+                            className="w-full bg-surface border border-line rounded-xl px-4 py-3 text-sm font-bold text-slate-100 focus:outline-none font-mono"
                           />
                         </div>
                         <div className="flex flex-col gap-2">
@@ -1457,7 +1457,7 @@ export default function CreateDeal() {
                           <select 
                             value={t.paysUtilities || 'Арендатор'} 
                             onChange={e => updateTenant(t.id, 'paysUtilities', e.target.value)}
-                            className="w-full bg-white border border-slate-200 rounded-xl px-4 py-3 text-sm font-bold text-slate-900 focus:outline-none"
+                            className="w-full bg-surface border border-line rounded-xl px-4 py-3 text-sm font-bold text-slate-100 focus:outline-none"
                           >
                             <option value="Арендатор">Арендатор</option>
                             <option value="Собственник">Собственник</option>
@@ -1467,7 +1467,7 @@ export default function CreateDeal() {
                           <label className="text-[10px] font-black uppercase tracking-widest text-slate-400">Риск съезда</label>
                           <select 
                             value={t.vacateRisk || 'низкий'} onChange={e => updateTenant(t.id, 'vacateRisk', e.target.value)}
-                            className="w-full bg-white border border-slate-200 rounded-xl px-4 py-3 text-sm font-bold text-slate-900 focus:outline-none"
+                            className="w-full bg-surface border border-line rounded-xl px-4 py-3 text-sm font-bold text-slate-100 focus:outline-none"
                           >
                             <option value="низкий">Низкий</option>
                             <option value="средний">Средний</option>
@@ -1478,22 +1478,22 @@ export default function CreateDeal() {
                           <button
                             type="button"
                             onClick={() => updateTenant(t.id, 'rentHolidays', !t.rentHolidays)}
-                            className={`w-10 h-6 rounded-full p-1 transition-colors duration-200 focus:outline-none ${t.rentHolidays ? 'bg-emerald-500' : 'bg-slate-200'}`}
+                            className={`w-10 h-6 rounded-full p-1 transition-colors duration-200 focus:outline-none ${t.rentHolidays ? 'bg-emerald-500' : 'bg-white/10'}`}
                           >
-                            <div className={`w-4 h-4 rounded-full bg-white shadow-sm transform transition-transform duration-200 ${t.rentHolidays ? 'translate-x-4' : 'translate-x-0'}`}></div>
+                            <div className={`w-4 h-4 rounded-full bg-surface shadow-sm transform transition-transform duration-200 ${t.rentHolidays ? 'translate-x-4' : 'translate-x-0'}`}></div>
                           </button>
-                          <span className="text-xs font-bold text-slate-700">Арендные каникулы</span>
+                          <span className="text-xs font-bold text-slate-300">Арендные каникулы</span>
                         </div>
                       </div>
                     </div>
                   ))}
                   
                   {tenants.length === 0 ? (
-                    <div className="text-center py-8 border border-dashed border-slate-200 rounded-2xl bg-slate-50/50 flex flex-col items-center justify-center gap-3">
+                    <div className="text-center py-8 border border-dashed border-line rounded-2xl bg-surface-2/50 flex flex-col items-center justify-center gap-3">
                       <span className="text-xs text-slate-400 font-bold">Арендаторы отсутствуют</span>
                       <button 
                         type="button" onClick={addTenant}
-                        className="flex items-center gap-2 px-4 py-2 bg-emerald-50 text-emerald-600 hover:bg-emerald-100 transition-all rounded-xl text-xs font-bold"
+                        className="flex items-center gap-2 px-4 py-2 bg-emerald-500/10 text-emerald-600 hover:bg-emerald-100 transition-all rounded-xl text-xs font-bold"
                       >
                         <Plus size={16} /> Добавить арендатора
                       </button>
@@ -1502,16 +1502,16 @@ export default function CreateDeal() {
                     <div className="flex justify-center pt-2">
                       <button 
                         type="button" onClick={addTenant}
-                        className="flex items-center gap-2 px-6 py-2.5 bg-emerald-50 text-emerald-600 hover:bg-emerald-100 transition-all rounded-xl text-xs font-black uppercase tracking-wider"
+                        className="flex items-center gap-2 px-6 py-2.5 bg-emerald-500/10 text-emerald-600 hover:bg-emerald-100 transition-all rounded-xl text-xs font-black uppercase tracking-wider"
                       >
                         <Plus size={16} /> Добавить арендатора
                       </button>
                     </div>
                   )}
 
-                  <div className="flex justify-between items-center pt-4 border-t border-slate-100">
+                  <div className="flex justify-between items-center pt-4 border-t border-line">
                     <span className="text-[10px] font-black uppercase tracking-widest text-slate-400">Общий арендный поток (в мес.):</span>
-                    <span className="text-sm font-bold text-slate-900 font-mono">{formatCurrency(metrics.totalRentalFlow)}</span>
+                    <span className="text-sm font-bold text-slate-100 font-mono">{formatCurrency(metrics.totalRentalFlow)}</span>
                   </div>
                 </div>
               </div>
@@ -1519,7 +1519,7 @@ export default function CreateDeal() {
 
             {/* 3.4 Ежемесячные расходы (OPEX) */}
             {!(participationFormat === 'non_collateral_loan' || participationFormat === 'zpif_units') && (
-              <div className="space-y-4 border-t border-slate-100 pt-6">
+              <div className="space-y-4 border-t border-line pt-6">
                 <h3 className="text-xs font-black uppercase tracking-widest text-emerald-500">3.4. Ежемесячные расходы (OPEX)</h3>
                 
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
@@ -1540,7 +1540,7 @@ export default function CreateDeal() {
                         type="text" value={formatNumberString((expenses as any)[item.key])} 
                         onChange={e => setExpenses({...expenses, [item.key]: parseNumberString(e.target.value)})}
                         placeholder="0"
-                        className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-sm font-bold text-slate-900 focus:outline-none font-mono"
+                        className="w-full bg-surface-2 border border-line rounded-xl px-4 py-3 text-sm font-bold text-slate-100 focus:outline-none font-mono"
                       />
                     </div>
                   ))}
@@ -1550,7 +1550,7 @@ export default function CreateDeal() {
                     <label className="text-[10px] font-black uppercase tracking-widest text-slate-400">Налоговая модель</label>
                     <select 
                       value={expenses.taxModel} onChange={e => handleTaxModelChange(e.target.value)}
-                      className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-sm font-bold text-slate-900 focus:outline-none cursor-pointer"
+                      className="w-full bg-surface-2 border border-line rounded-xl px-4 py-3 text-sm font-bold text-slate-100 focus:outline-none cursor-pointer"
                     >
                       <option value="usn_income">УСН «Доходы» (6%)</option>
                       <option value="usn_income_expenses">УСН «Доходы минус расходы» (15%)</option>
@@ -1564,7 +1564,7 @@ export default function CreateDeal() {
                       type="number" value={expenses.taxRate} 
                       onChange={e => setExpenses({...expenses, taxRate: Number(e.target.value) || 0})}
                       placeholder="6"
-                      className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-sm font-bold text-slate-900 focus:outline-none font-mono"
+                      className="w-full bg-surface-2 border border-line rounded-xl px-4 py-3 text-sm font-bold text-slate-100 focus:outline-none font-mono"
                     />
                   </div>
                 </div>
@@ -1572,7 +1572,7 @@ export default function CreateDeal() {
             )}
 
             {/* 3.5 Текущее состояние актива */}
-            <div className="space-y-4 border-t border-slate-100 pt-6">
+            <div className="space-y-4 border-t border-line pt-6">
               <h3 className="text-xs font-black uppercase tracking-widest text-emerald-500">3.5. Текущее состояние актива</h3>
               
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -1582,7 +1582,7 @@ export default function CreateDeal() {
                     type="text" value={formatNumberString(performance.currentMarketValue)} 
                     onChange={e => setPerformance({...performance, currentMarketValue: parseNumberString(e.target.value)})}
                     placeholder="12 000 000"
-                    className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-sm font-bold text-slate-900 focus:outline-none font-mono"
+                    className="w-full bg-surface-2 border border-line rounded-xl px-4 py-3 text-sm font-bold text-slate-100 focus:outline-none font-mono"
                   />
                 </div>
               </div>
@@ -1594,9 +1594,9 @@ export default function CreateDeal() {
         {/* Right Column: Sticky Summary Sidebar */}
         <div className="xl:col-start-2">
           <div className="sticky top-6 space-y-6">
-            <div className="bg-white border border-slate-200 rounded-3xl p-6 shadow-sm flex flex-col gap-5 relative overflow-hidden">
+            <div className="bg-surface border border-line rounded-3xl p-6 shadow-sm flex flex-col gap-5 relative overflow-hidden">
               
-              <div className="flex items-center gap-2 text-slate-900 border-b border-slate-100 pb-3">
+              <div className="flex items-center gap-2 text-slate-100 border-b border-line pb-3">
                 <span className="font-black text-xs uppercase tracking-widest">Предварительный расчет</span>
               </div>
 
@@ -1624,7 +1624,7 @@ export default function CreateDeal() {
                   />
                 </svg>
                 <div className="absolute flex flex-col items-center text-center justify-center">
-                  <span className={`text-xl font-black leading-none tabular-nums ${metrics.roe < 0 ? 'text-red-600' : 'text-slate-900'}`}>
+                  <span className={`text-xl font-black leading-none tabular-nums ${metrics.roe < 0 ? 'text-red-600' : 'text-slate-100'}`}>
                     {`${metrics.roe.toFixed(1)}%`}
                   </span>
                   <span className="text-[9px] uppercase tracking-wider text-slate-400 font-black mt-1 leading-none">
@@ -1635,37 +1635,37 @@ export default function CreateDeal() {
 
               {/* Reactive Metrics list */}
               <div className="space-y-4 pt-2">
-                <div className="flex justify-between items-center border-b border-slate-50 pb-2">
+                <div className="flex justify-between items-center border-b border-line pb-2">
                   <span className="text-[10px] font-black uppercase tracking-widest text-slate-400">Сумма инвестиций</span>
-                  <span className="text-xs font-bold text-slate-900 font-mono">{formatCurrency(metrics.investmentSum)}</span>
+                  <span className="text-xs font-bold text-slate-100 font-mono">{formatCurrency(metrics.investmentSum)}</span>
                 </div>
-                <div className="flex justify-between items-center border-b border-slate-50 pb-2">
+                <div className="flex justify-between items-center border-b border-line pb-2">
                   <span className="text-[10px] font-black uppercase tracking-widest text-slate-400">Чистый поток (NOI)</span>
                   <span className={`text-xs font-bold font-mono ${metrics.noi < 0 ? 'text-red-600' : 'text-emerald-600'}`}>{formatCurrency(metrics.noi)}</span>
                 </div>
-                <div className="flex justify-between items-center border-b border-slate-50 pb-2">
+                <div className="flex justify-between items-center border-b border-line pb-2">
                   <span className="text-[10px] font-black uppercase tracking-widest text-slate-400">Денежный поток (CF)</span>
                   <span className={`text-xs font-bold font-mono ${metrics.cashFlow < 0 ? 'text-red-600' : 'text-emerald-600'}`}>{formatCurrency(metrics.cashFlow)}</span>
                 </div>
-                <div className="flex justify-between items-center border-b border-slate-50 pb-2">
+                <div className="flex justify-between items-center border-b border-line pb-2">
                   <span className="text-[10px] font-black uppercase tracking-widest text-slate-400">DSCR</span>
-                  <span className={`text-xs font-bold font-mono ${metrics.dscr > 0 && metrics.dscr < 1 ? 'text-red-600' : 'text-slate-900'}`}>{metrics.dscr > 0 ? metrics.dscr.toFixed(2) : '—'}</span>
+                  <span className={`text-xs font-bold font-mono ${metrics.dscr > 0 && metrics.dscr < 1 ? 'text-red-600' : 'text-slate-100'}`}>{metrics.dscr > 0 ? metrics.dscr.toFixed(2) : '—'}</span>
                 </div>
-                <div className="flex justify-between items-center border-b border-slate-50 pb-2">
+                <div className="flex justify-between items-center border-b border-line pb-2">
                   <span className="text-[10px] font-black uppercase tracking-widest text-slate-400">Срок окупаемости</span>
                   <span className="text-xs font-bold text-slate-950">
                     {typeof metrics.paybackYears === 'number' ? `${metrics.paybackYears.toFixed(1)} лет` : '—'}
                   </span>
                 </div>
-                <div className="flex justify-between items-center border-b border-slate-50 pb-2">
+                <div className="flex justify-between items-center border-b border-line pb-2">
                   <span className="text-[10px] font-black uppercase tracking-widest text-slate-400">Формат участия</span>
-                  <span className="text-xs font-bold text-slate-900 text-right max-w-[180px] truncate">
+                  <span className="text-xs font-bold text-slate-100 text-right max-w-[180px] truncate">
                     {FORMATS.find(f => f.id === participationFormat)?.label || participationFormat}
                   </span>
                 </div>
                 <div className="flex justify-between items-center pb-2">
                   <span className="text-[10px] font-black uppercase tracking-widest text-slate-400">Статус сделки</span>
-                  <span className="text-xs font-bold text-slate-900">{status}</span>
+                  <span className="text-xs font-bold text-slate-100">{status}</span>
                 </div>
               </div>
 
@@ -1680,17 +1680,17 @@ export default function CreateDeal() {
       </div>
 
       {/* Sticky Footer */}
-      <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-slate-200 py-4 px-6 md:px-12 flex justify-between items-center shadow-lg z-30">
+      <div className="fixed bottom-0 left-0 right-0 bg-surface border-t border-line py-4 px-6 md:px-12 flex justify-between items-center shadow-lg z-30">
         <button 
           onClick={() => navigate('/deals')}
-          className="flex items-center gap-2 px-5 py-2.5 bg-white text-slate-700 font-bold text-xs uppercase tracking-widest rounded-xl border border-slate-200 hover:bg-slate-50 transition-all shadow-sm"
+          className="flex items-center gap-2 px-5 py-2.5 bg-surface text-slate-300 font-bold text-xs uppercase tracking-widest rounded-xl border border-line hover:bg-surface-2 transition-all shadow-sm"
         >
           <ArrowLeft size={16} /> Назад
         </button>
         <div className="flex gap-3">
           <button 
             onClick={() => handleSubmit(true)}
-            className="px-5 py-2.5 bg-slate-100 text-slate-700 font-black text-xs uppercase tracking-widest rounded-xl hover:bg-slate-200 transition-all shadow-sm"
+            className="px-5 py-2.5 bg-surface-2 text-slate-300 font-black text-xs uppercase tracking-widest rounded-xl hover:bg-white/10 transition-all shadow-sm"
           >
             Сохранить черновик
           </button>
