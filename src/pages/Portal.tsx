@@ -162,14 +162,12 @@ const Sidebar = ({ activeTab, setActiveTab }: { activeTab: string; setActiveTab:
 
       <nav className="flex flex-col gap-1.5">
         <NavItems activeTab={activeTab} setActiveTab={setActiveTab} />
-        {role === 'committee' && (
-          <Link
-            to="/deals"
-            className="flex items-center gap-3 px-4 py-3.5 rounded-xl text-[13px] font-bold text-slate-400 hover:text-slate-100 hover:bg-white/5 transition-all"
-          >
-            <Plus size={18} /> Создание сделок
-          </Link>
-        )}
+        <Link
+          to="/deals"
+          className="flex items-center gap-3 px-4 py-3.5 rounded-xl text-[13px] font-bold text-slate-400 hover:text-slate-100 hover:bg-white/5 transition-all"
+        >
+          <Plus size={18} /> Создание сделок
+        </Link>
       </nav>
 
       <div className="mt-auto flex flex-col gap-3 pt-6">
@@ -204,17 +202,15 @@ const Sidebar = ({ activeTab, setActiveTab }: { activeTab: string; setActiveTab:
 };
 
 const MobileBar = ({ activeTab, setActiveTab }: { activeTab: string; setActiveTab: (tab: string) => void }) => {
-  const { role, signOut } = useAuth();
+  const { signOut } = useAuth();
   return (
     <header className="lg:hidden sticky top-0 z-30 flex items-center gap-3 bg-surface/90 backdrop-blur border-b border-line px-4 py-3 overflow-x-auto">
       <X7Logo />
       <nav className="flex items-center gap-1">
         <NavItems activeTab={activeTab} setActiveTab={setActiveTab} compact />
-        {role === 'committee' && (
-          <Link to="/deals" className="flex items-center gap-2 px-3 py-2 rounded-xl text-xs font-semibold text-slate-400 hover:text-slate-100 hover:bg-white/5 whitespace-nowrap">
-            <Plus size={16} /> Сделки
-          </Link>
-        )}
+        <Link to="/deals" className="flex items-center gap-2 px-3 py-2 rounded-xl text-xs font-semibold text-slate-400 hover:text-slate-100 hover:bg-white/5 whitespace-nowrap">
+          <Plus size={16} /> Сделки
+        </Link>
       </nav>
       <button onClick={signOut} title="Выйти" className="ml-auto text-slate-500 hover:text-rose-400 transition-colors shrink-0">
         <LogOut size={16} />
@@ -1085,44 +1081,15 @@ const SyndicateEvents = () => {
       date: item.date,
       comment: item.comment,
     })))
-    .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+    .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
+    .slice(0, 8);
 
-  // Список событий из макета для точного визуального соответствия
-  const mockupEvents = [
-    {
-      id: 'mock-1',
-      category: 'Новое событие',
-      time: '12:45',
-      title: 'Новый лот: Девелопмент САО',
-      description: 'Сбор заявок открыт. Ожидаемая доходность (IRR) от 28% годовых.',
-      linkText: 'Запросить буклет →',
-      dotColor: 'text-[#10b981] bg-[#10b981]',
-    },
-    {
-      id: 'mock-2',
-      category: 'Объект «Восток»: Регистрация',
-      time: 'Вчера',
-      title: '',
-      description: 'Право собственности зафиксировано в Росреестре.',
-      dotColor: 'text-[#3b82f6] bg-[#3b82f6]',
-    },
-    {
-      id: 'mock-3',
-      category: 'Выплата дохода инвесторам',
-      time: '09.06',
-      title: '',
-      description: 'Начислена выплата по проекту «ГАБ Пятерочка» за май 2026 г.',
-      dotColor: 'text-[#8b5cf6] bg-[#8b5cf6]',
-    },
-    {
-      id: 'mock-4',
-      category: 'Обновление проекта Loft Yard',
-      time: '07.06',
-      title: '',
-      description: 'Завершены демонтажные работы. Переходим к этапу усиления конструкций.',
-      dotColor: 'text-[#f97316] bg-[#f97316]',
-    },
-  ];
+  const formatEventDate = (iso: string) => {
+    const d = new Date(iso);
+    return Number.isNaN(d.getTime())
+      ? ''
+      : d.toLocaleDateString('ru-RU', { day: '2-digit', month: 'short' });
+  };
 
   return (
     <section className="col-span-12 lg:col-span-4 bg-surface border border-line rounded-3xl p-6 shadow-lg shadow-black/30 flex flex-col justify-between">
@@ -1135,30 +1102,30 @@ const SyndicateEvents = () => {
             Все события
           </button>
         </div>
-        
+
         <div className="space-y-4">
-          {mockupEvents.map(event => (
-            <div key={event.id} className="relative pl-5 pb-1 border-l border-line last:border-0 last:pb-0">
-              <span className={`absolute -left-[5px] top-1.5 w-2.5 h-2.5 rounded-full ${event.dotColor} shadow-[0_0_6px_currentColor]`}></span>
-              
-              <div className="flex justify-between items-start mb-0.5">
-                <span className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">{event.category}</span>
-                <span className="text-[10px] text-slate-500 font-medium">{event.time}</span>
+          {dbEvents.length === 0 ? (
+            <p className="text-xs text-slate-500 font-medium py-6 text-center">
+              Событий пока нет. Они появляются при смене статусов сделок.
+            </p>
+          ) : (
+            dbEvents.map(event => (
+              <div key={event.id} className="relative pl-5 pb-1 border-l border-line last:border-0 last:pb-0">
+                <span className="absolute -left-[5px] top-1.5 w-2.5 h-2.5 rounded-full text-[#10b981] bg-[#10b981] shadow-[0_0_6px_currentColor]"></span>
+
+                <div className="flex justify-between items-start mb-0.5">
+                  <span className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">{cleanLabel(event.status)}</span>
+                  <span className="text-[10px] text-slate-500 font-medium">{formatEventDate(event.date)}</span>
+                </div>
+
+                <p className="text-xs font-bold text-slate-100 mt-1 leading-tight">{event.dealName}</p>
+
+                {event.comment && (
+                  <p className="text-xs text-slate-400 mt-1 leading-relaxed">{event.comment}</p>
+                )}
               </div>
-              
-              {event.title && (
-                <p className="text-xs font-bold text-slate-100 mt-1 leading-tight">{event.title}</p>
-              )}
-              
-              <p className="text-xs text-slate-400 mt-1 leading-relaxed">{event.description}</p>
-              
-              {event.linkText && (
-                <a href="#booklet" className="inline-block text-[11px] text-[#10b981] font-bold mt-2 hover:underline transition-all">
-                  {event.linkText}
-                </a>
-              )}
-            </div>
-          ))}
+            ))
+          )}
         </div>
       </div>
 

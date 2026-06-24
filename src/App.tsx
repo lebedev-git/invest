@@ -19,24 +19,22 @@ export default function App() {
             {/* Публичный вход */}
             <Route path="/login" element={<Login />} />
 
-            {/* Требуется авторизация (любая роль) */}
+            {/* Требуется авторизация (одна сущность — все права у любого вошедшего) */}
             <Route element={<RoleGuard />}>
               <Route path="/" element={<Portal />} />
 
-              {/* Создание сделок — только инвест-комитет */}
-              <Route element={<RoleGuard role="committee" />}>
-                <Route path="/deals" element={<AdminLayout />}>
-                  <Route index element={<AdminDeals />} />
-                  <Route path="create" element={<CreateDeal />} />
-                  <Route path=":id" element={<ProjectView />} />
-                  <Route path=":id/edit" element={<CreateDeal />} />
-                </Route>
+              {/* Создание сделок — доступно любому авторизованному */}
+              <Route path="/deals" element={<AdminLayout />}>
+                <Route index element={<AdminDeals />} />
+                <Route path="create" element={<CreateDeal />} />
+                <Route path=":id" element={<ProjectView />} />
+                <Route path=":id/edit" element={<CreateDeal />} />
+              </Route>
 
-                {/* Legacy admin route kept for existing links */}
-                <Route path="/admin" element={<AdminLayout />}>
-                  <Route index element={<Navigate to="/deals" replace />} />
-                  <Route path="deals" element={<AdminDeals />} />
-                </Route>
+              {/* Legacy admin route kept for existing links */}
+              <Route path="/admin" element={<AdminLayout />}>
+                <Route index element={<Navigate to="/deals" replace />} />
+                <Route path="deals" element={<AdminDeals />} />
               </Route>
             </Route>
 

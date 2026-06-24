@@ -19,6 +19,7 @@ interface AuthContextType {
   isAuthenticated: boolean;
   loading: boolean;
   signIn: (email: string, password: string) => Promise<void>;
+  signUp: (email: string, password: string, fullName?: string) => Promise<void>;
   signOut: () => void;
 }
 
@@ -54,6 +55,23 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     await pb.collection('users').authWithPassword(email, password);
   }, []);
 
+  // Саморегистрация. В режиме «одна сущность» новый пользователь получает роль
+  // committee (полный доступ) и сразу логинится.
+  // ЗАДЕЛ ПОД OTP: когда на сервере включат SMTP + One-time password, здесь
+  // достаточно после create вызвать pb.collection('users').requestOTP(email)
+  // и провести подтверждение кодом перед авто-входом (см. authWithOTP).
+  const signUp = useCallback(async (email: string, password: string, fullName?: string) => {
+    await pb.collection('users').create({
+      email: email.trim(),
+      password,
+      passwordConfirm: password,
+      emailVisibility: true,
+      role: 'committee',
+      full_name: (fullName || '').trim(),
+    });
+    await pb.collection('users').authWithPassword(email.trim(), password);
+  }, []);
+
   const signOut = useCallback(() => {
     pb.authStore.clear();
   }, []);
@@ -62,7 +80,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   return (
     <AuthContext.Provider
-      value={{ user, role, isAuthenticated: !!user, loading, signIn, signOut }}
+      value={{ user, role, isAuthenticated: !!user, loading, signIn, signUp, signOut }}
     >
       {children}
     </AuthContext.Provider>

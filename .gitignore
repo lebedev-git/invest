@@ -6,8 +6,10 @@ coverage/
 *.log
 .env*
 !.env.example
+!.env.production
 
 .vercel
+.playwright-mcp/
 
 # PocketBase: бинарь и данные не коммитим, миграции — коммитим
 /pb/pocketbase.exe

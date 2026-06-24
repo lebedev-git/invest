@@ -35,11 +35,14 @@ export const getNetAnnualFlow = (deal: Deal): number => {
     - parseMoney(deal.utilities) * 12;
 };
 
-export const getPaybackYears = (deal: Deal): number => {
+// Возвращает срок окупаемости в годах либо null, если сделка не окупается
+// (отрицательный/нулевой денежный поток). Раньше здесь молча возвращался 0,
+// из-за чего убыточная сделка выглядела как «окупаемость 0 лет».
+export const getPaybackYears = (deal: Deal): number | null => {
   if (deal.metrics) {
-    return typeof deal.metrics.paybackYears === 'number' ? deal.metrics.paybackYears : 0;
+    return typeof deal.metrics.paybackYears === 'number' ? deal.metrics.paybackYears : null;
   }
   const capital = getDealCapital(deal);
   const annualFlow = getNetAnnualFlow(deal);
-  return capital > 0 && annualFlow > 0 ? capital / annualFlow : 0;
+  return capital > 0 && annualFlow > 0 ? capital / annualFlow : null;
 };

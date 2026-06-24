@@ -1,15 +1,19 @@
 import React, { useState } from 'react';
 import { Navigate, useLocation, useNavigate } from 'react-router-dom';
 import { motion } from 'motion/react';
-import { LogIn, Loader2 } from 'lucide-react';
+import { LogIn, UserPlus, Loader2 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 
+type Mode = 'signin' | 'signup';
+
 export default function Login() {
-  const { signIn, isAuthenticated } = useAuth();
+  const { signIn, signUp, isAuthenticated } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
   const from = (location.state as any)?.from?.pathname || '/';
 
+  const [mode, setMode] = useState<Mode>('signin');
+  const [fullName, setFullName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
@@ -20,19 +24,39 @@ export default function Login() {
     return <Navigate to={from} replace />;
   }
 
+  const switchMode = (next: Mode) => {
+    setMode(next);
+    setError('');
+  };
+
+  const mapError = (err: any): string => {
+    const data = err?.response?.data || err?.data;
+    // Частые случаи регистрации: занятый email / слабый пароль.
+    if (data?.email) return 'Этот email уже зарегистрирован или указан неверно.';
+    if (data?.password) return 'Пароль слишком короткий — минимум 8 символов.';
+    if (mode === 'signup') return 'Не удалось зарегистрироваться. Проверьте данные и повторите.';
+    return 'Неверный логин или пароль';
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
     setLoading(true);
     try {
-      await signIn(email.trim(), password);
+      if (mode === 'signup') {
+        await signUp(email, password, fullName);
+      } else {
+        await signIn(email.trim(), password);
+      }
       navigate(from, { replace: true });
     } catch (err: any) {
-      setError('Неверный логин или пароль');
+      setError(mapError(err));
     } finally {
       setLoading(false);
     }
   };
+
+  const isSignup = mode === 'signup';
 
   return (
     <div className="min-h-screen w-full bg-base text-slate-100 font-sans flex items-center justify-center p-4 selection:bg-emerald-500 selection:text-white">
@@ -45,11 +69,51 @@ export default function Login() {
           <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-emerald-400 to-emerald-600 flex items-center justify-center shadow-lg shadow-emerald-500/20 mb-4">
             <span className="text-white font-black">X7</span>
           </div>
-          <h1 className="text-2xl font-black tracking-tight text-slate-50">Вход в систему</h1>
-          <p className="text-xs text-slate-500 mt-1">Авторизуйтесь для доступа к порталу</p>
+          <h1 className="text-2xl font-black tracking-tight text-slate-50">
+            {isSignup ? 'Регистрация' : 'Вход в систему'}
+          </h1>
+          <p className="text-xs text-slate-500 mt-1">
+            {isSignup ? 'Создайте аккаунт для доступа к порталу' : 'Авторизуйтесь для доступа к порталу'}
+          </p>
+        </div>
+
+        {/* Переключатель Вход / Регистрация */}
+        <div className="flex gap-1 p-1 mb-6 rounded-xl bg-surface-2 border border-line">
+          <button
+            type="button"
+            onClick={() => switchMode('signin')}
+            className={`flex-1 py-2 rounded-lg text-[11px] font-black uppercase tracking-widest transition-all ${
+              !isSignup ? 'bg-emerald-500 text-white shadow' : 'text-slate-400 hover:text-slate-100'
+            }`}
+          >
+            Вход
+          </button>
+          <button
+            type="button"
+            onClick={() => switchMode('signup')}
+            className={`flex-1 py-2 rounded-lg text-[11px] font-black uppercase tracking-widest transition-all ${
+              isSignup ? 'bg-emerald-500 text-white shadow' : 'text-slate-400 hover:text-slate-100'
+            }`}
+          >
+            Регистрация
+          </button>
         </div>
 
         <form onSubmit={handleSubmit} className="flex flex-col gap-4">
+          {isSignup && (
+            <div className="flex flex-col gap-2">
+              <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Имя</label>
+              <input
+                type="text"
+                value={fullName}
+                onChange={e => setFullName(e.target.value)}
+                autoComplete="name"
+                required
+                placeholder="Иван Иванов"
+                className="field"
+              />
+            </div>
+          )}
           <div className="flex flex-col gap-2">
             <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Логин (email)</label>
             <input
@@ -68,11 +132,15 @@ export default function Login() {
               type="password"
               value={password}
               onChange={e => setPassword(e.target.value)}
-              autoComplete="current-password"
+              autoComplete={isSignup ? 'new-password' : 'current-password'}
               required
+              minLength={isSignup ? 8 : undefined}
               placeholder="••••••••"
               className="field"
             />
+            {isSignup && (
+              <p className="text-[10px] text-slate-500">Минимум 8 символов.</p>
+            )}
           </div>
 
           {error && (
@@ -86,8 +154,14 @@ export default function Login() {
             disabled={loading}
             className="mt-2 w-full py-3 rounded-xl bg-emerald-500 text-white font-black text-xs uppercase tracking-widest hover:bg-emerald-400 disabled:opacity-60 transition-all flex items-center justify-center gap-2 shadow-lg shadow-emerald-500/20"
           >
-            {loading ? <Loader2 size={16} className="animate-spin" /> : <LogIn size={16} />}
-            Войти
+            {loading ? (
+              <Loader2 size={16} className="animate-spin" />
+            ) : isSignup ? (
+              <UserPlus size={16} />
+            ) : (
+              <LogIn size={16} />
+            )}
+            {isSignup ? 'Зарегистрироваться' : 'Войти'}
           </button>
         </form>
       </motion.div>
