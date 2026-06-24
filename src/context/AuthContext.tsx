@@ -19,7 +19,11 @@ interface AuthContextType {
   isAuthenticated: boolean;
   loading: boolean;
   signIn: (email: string, password: string) => Promise<void>;
-  signUp: (email: string, password: string, fullName?: string) => Promise<void>;
+  // Регистрация: создаёт пользователя и отправляет код на почту. Возвращает otpId,
+  // который нужен для последующего подтверждения в confirmOtp.
+  signUp: (email: string, password: string, fullName?: string) => Promise<string>;
+  // Подтверждение кода из письма — завершает вход.
+  confirmOtp: (otpId: string, code: string) => Promise<void>;
   signOut: () => void;
 }
 
@@ -55,21 +59,28 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     await pb.collection('users').authWithPassword(email, password);
   }, []);
 
-  // Саморегистрация. В режиме «одна сущность» новый пользователь получает роль
-  // committee (полный доступ) и сразу логинится.
-  // ЗАДЕЛ ПОД OTP: когда на сервере включат SMTP + One-time password, здесь
-  // достаточно после create вызвать pb.collection('users').requestOTP(email)
-  // и провести подтверждение кодом перед авто-входом (см. authWithOTP).
-  const signUp = useCallback(async (email: string, password: string, fullName?: string) => {
+  // Саморегистрация с подтверждением по почте (OTP включён в коллекции users).
+  // 1) создаём пользователя (роль committee = полный доступ в режиме «одна сущность»),
+  // 2) запрашиваем одноразовый код — PocketBase шлёт его на email,
+  // 3) возвращаем otpId; ввод кода завершается в confirmOtp → authWithOTP.
+  const signUp = useCallback(async (email: string, password: string, fullName?: string): Promise<string> => {
+    const mail = email.trim();
     await pb.collection('users').create({
-      email: email.trim(),
+      email: mail,
       password,
       passwordConfirm: password,
       emailVisibility: true,
       role: 'committee',
       full_name: (fullName || '').trim(),
     });
-    await pb.collection('users').authWithPassword(email.trim(), password);
+    const otp = await pb.collection('users').requestOTP(mail);
+    return otp.otpId;
+  }, []);
+
+  // Завершение регистрации/входа кодом из письма. authWithOTP заодно помечает
+  // пользователя verified и наполняет authStore (срабатывает onChange выше).
+  const confirmOtp = useCallback(async (otpId: string, code: string) => {
+    await pb.collection('users').authWithOTP(otpId, code.trim());
   }, []);
 
   const signOut = useCallback(() => {
@@ -80,7 +91,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   return (
     <AuthContext.Provider
-      value={{ user, role, isAuthenticated: !!user, loading, signIn, signUp, signOut }}
+      value={{ user, role, isAuthenticated: !!user, loading, signIn, signUp, confirmOtp, signOut }}
     >
       {children}
     </AuthContext.Provider>
