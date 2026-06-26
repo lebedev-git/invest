@@ -765,7 +765,7 @@ const ProjectsCards = ({ forecastConfig, onSelectProject, currencyState }: {
   currencyState: ReturnType<typeof useCurrencyRates>;
   setActiveTab?: (tab: string) => void;
 }) => {
-  const { deals } = useDeals();
+  const { deals, fileUrl } = useDeals();
   const portfolioDeals = getInvestedDeals(deals);
   const { currency, rates } = currencyState;
   const scrollRef = React.useRef<HTMLDivElement>(null);
@@ -798,7 +798,9 @@ const ProjectsCards = ({ forecastConfig, onSelectProject, currencyState }: {
               const projectedPercent = capital ? (projectedIncome / capital) * 100 : 0;
               const paybackYears = getPaybackYears(project);
               const progress = getStageProgress(String(project.status));
-              const image = getProjectImage(project.name);
+              const image = project.images?.length
+                ? fileUrl(project.id, project.images[0], '400x300')
+                : getProjectImage(project.name);
               const badgeStyle = getStatusBadgeStyle(project.status);
               const progressBarColor = getProgressBarColor(progress);
 

@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useRef, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { motion } from 'motion/react';
 import {
@@ -12,6 +12,11 @@ import {
   UserCircle,
   History,
   Coins,
+  ImageIcon,
+  Upload,
+  Trash2,
+  Download,
+  Loader2,
 } from 'lucide-react';
 import { Deal, useDeals } from '../../context/DealContext';
 import { statusColor } from '../../utils/dealDisplay';
@@ -66,7 +71,7 @@ const buildHistory = (deal: Deal) => {
 export default function ProjectView() {
   const { id } = useParams();
   const navigate = useNavigate();
-  const { deals } = useDeals();
+  const { deals, uploadDealFiles, removeDealFile, fileUrl } = useDeals();
   const deal = deals.find(d => d.id === id);
 
   if (!deal) {
@@ -161,6 +166,14 @@ export default function ProjectView() {
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Left column */}
         <div className="lg:col-span-2 flex flex-col gap-6">
+          {/* Images gallery */}
+          <ImagesCard
+            deal={deal}
+            fileUrl={fileUrl}
+            onUpload={files => uploadDealFiles(deal.id, 'images', files)}
+            onRemove={name => removeDealFile(deal.id, 'images', name)}
+          />
+
           {/* Object params */}
           <Card icon={Building2} title="Параметры объекта">
             <Row label="Тип объекта" value={deal.type} />
@@ -216,10 +229,13 @@ export default function ProjectView() {
             </Card>
           )}
 
-          {/* Documents — placeholder until Supabase */}
-          <Card icon={FileText} title="Документы">
-            <EmptyState text="Хранилище документов появится после подключения бэкенда (Supabase). Здесь будут договор, инвест-заявка, отчёт по проверке и выписки." />
-          </Card>
+          {/* Documents */}
+          <DocumentsCard
+            deal={deal}
+            fileUrl={fileUrl}
+            onUpload={files => uploadDealFiles(deal.id, 'documents', files)}
+            onRemove={name => removeDealFile(deal.id, 'documents', name)}
+          />
         </div>
 
         {/* Right column */}
@@ -302,5 +318,164 @@ function EmptyState({ text }: { text: string }) {
     <div className="border border-dashed border-line rounded-2xl bg-surface-2/50 p-5 text-center">
       <p className="text-xs text-slate-400 font-medium leading-relaxed">{text}</p>
     </div>
+  );
+}
+
+interface FileCardProps {
+  deal: Deal;
+  fileUrl: (dealId: string, filename: string, thumb?: string) => string;
+  onUpload: (files: File[]) => Promise<void>;
+  onRemove: (filename: string) => Promise<void>;
+}
+
+// Галерея изображений объекта с загрузкой/удалением.
+function ImagesCard({ deal, fileUrl, onUpload, onRemove }: FileCardProps) {
+  const inputRef = useRef<HTMLInputElement>(null);
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState('');
+  const images = deal.images || [];
+
+  const handleFiles = async (files: FileList | null) => {
+    if (!files || !files.length) return;
+    setError('');
+    setBusy(true);
+    try {
+      await onUpload(Array.from(files));
+    } catch {
+      setError('Не удалось загрузить изображения.');
+    } finally {
+      setBusy(false);
+      if (inputRef.current) inputRef.current.value = '';
+    }
+  };
+
+  const handleRemove = async (name: string) => {
+    setBusy(true);
+    try {
+      await onRemove(name);
+    } catch {
+      setError('Не удалось удалить изображение.');
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  return (
+    <Card icon={ImageIcon} title="Фотографии объекта">
+      {images.length > 0 ? (
+        <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 mb-4">
+          {images.map(name => (
+            <div key={name} className="relative group rounded-2xl overflow-hidden border border-line aspect-[4/3] bg-surface-2">
+              <img src={fileUrl(deal.id, name, '400x300')} alt={deal.name} className="w-full h-full object-cover" />
+              <button
+                onClick={() => handleRemove(name)}
+                disabled={busy}
+                title="Удалить"
+                className="absolute top-1.5 right-1.5 w-7 h-7 rounded-lg bg-black/60 text-white flex items-center justify-center opacity-0 group-hover:opacity-100 hover:bg-rose-600 transition-all"
+              >
+                <Trash2 size={14} />
+              </button>
+            </div>
+          ))}
+        </div>
+      ) : (
+        <EmptyState text="Фотографий пока нет. Загрузите изображения объекта — они появятся в портфеле инвестора." />
+      )}
+
+      <input ref={inputRef} type="file" accept="image/*" multiple hidden onChange={e => handleFiles(e.target.files)} />
+      <button
+        onClick={() => inputRef.current?.click()}
+        disabled={busy}
+        className="w-full mt-1 py-3 rounded-xl bg-surface-2 border border-line text-[10px] font-black uppercase tracking-widest text-slate-300 hover:text-white hover:border-emerald-500/40 transition-all flex items-center justify-center gap-2 disabled:opacity-60"
+      >
+        {busy ? <Loader2 size={14} className="animate-spin" /> : <Upload size={14} />} Загрузить фото
+      </button>
+      {error && <p className="text-[11px] text-rose-400 font-bold mt-2 text-center">{error}</p>}
+    </Card>
+  );
+}
+
+const formatBytesName = (name: string) => name.replace(/_\w{10}(\.\w+)$/, '$1'); // PB добавляет суффикс к имени
+
+// Список документов сделки с загрузкой/скачиванием/удалением.
+function DocumentsCard({ deal, fileUrl, onUpload, onRemove }: FileCardProps) {
+  const inputRef = useRef<HTMLInputElement>(null);
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState('');
+  const docs = deal.documents || [];
+
+  const handleFiles = async (files: FileList | null) => {
+    if (!files || !files.length) return;
+    setError('');
+    setBusy(true);
+    try {
+      await onUpload(Array.from(files));
+    } catch {
+      setError('Не удалось загрузить документы.');
+    } finally {
+      setBusy(false);
+      if (inputRef.current) inputRef.current.value = '';
+    }
+  };
+
+  const handleRemove = async (name: string) => {
+    setBusy(true);
+    try {
+      await onRemove(name);
+    } catch {
+      setError('Не удалось удалить документ.');
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  return (
+    <Card icon={FileText} title="Документы">
+      {docs.length > 0 ? (
+        <div className="divide-y divide-line mb-4">
+          {docs.map(name => (
+            <div key={name} className="flex items-center justify-between gap-3 py-3 first:pt-0">
+              <div className="flex items-center gap-3 min-w-0">
+                <div className="w-9 h-9 rounded-xl bg-surface-2 border border-line text-slate-400 flex items-center justify-center shrink-0">
+                  <FileText size={16} />
+                </div>
+                <span className="text-sm font-bold text-slate-200 truncate" title={formatBytesName(name)}>{formatBytesName(name)}</span>
+              </div>
+              <div className="flex items-center gap-1.5 shrink-0">
+                <a
+                  href={fileUrl(deal.id, name)}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  title="Скачать"
+                  className="w-8 h-8 rounded-lg bg-surface-2 border border-line text-slate-400 hover:text-emerald-500 hover:border-emerald-500/50 transition-all flex items-center justify-center"
+                >
+                  <Download size={14} />
+                </a>
+                <button
+                  onClick={() => handleRemove(name)}
+                  disabled={busy}
+                  title="Удалить"
+                  className="w-8 h-8 rounded-lg bg-surface-2 border border-line text-slate-400 hover:text-rose-400 hover:border-rose-500/50 transition-all flex items-center justify-center"
+                >
+                  <Trash2 size={14} />
+                </button>
+              </div>
+            </div>
+          ))}
+        </div>
+      ) : (
+        <EmptyState text="Документов пока нет. Загрузите договор, инвест-заявку, отчёт по проверке, выписки." />
+      )}
+
+      <input ref={inputRef} type="file" multiple hidden onChange={e => handleFiles(e.target.files)} />
+      <button
+        onClick={() => inputRef.current?.click()}
+        disabled={busy}
+        className="w-full mt-1 py-3 rounded-xl bg-surface-2 border border-line text-[10px] font-black uppercase tracking-widest text-slate-300 hover:text-white hover:border-emerald-500/40 transition-all flex items-center justify-center gap-2 disabled:opacity-60"
+      >
+        {busy ? <Loader2 size={14} className="animate-spin" /> : <Upload size={14} />} Загрузить документ
+      </button>
+      {error && <p className="text-[11px] text-rose-400 font-bold mt-2 text-center">{error}</p>}
+    </Card>
   );
 }

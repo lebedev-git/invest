@@ -68,6 +68,10 @@ export interface Deal {
   strategy?: string;
   statusHistory?: StatusHistoryItem[];
 
+  // Файлы PocketBase (имена файлов в одноимённых полях коллекции deals).
+  images?: string[];
+  documents?: string[];
+
   // Overhauled parameters
   metrics?: DealMetrics;
   additional?: {
@@ -180,12 +184,17 @@ function recordToDeal(rec: any): Deal {
     targetIrr: (data.targetIrr ?? rec.target_irr ?? '0') as string,
     termDate: (data.termDate ?? rec.term_date ?? '') as string,
     statusHistory: [],
+    // Файловые поля берём из колонок записи (массивы имён файлов).
+    images: Array.isArray(rec.images) ? rec.images : [],
+    documents: Array.isArray(rec.documents) ? rec.documents : [],
   } as Deal;
 }
 
 // Объект Deal → тело записи PocketBase (зеркалим ключевые поля в колонки + весь объект в data).
 function dealToBody(deal: Deal) {
-  const { id, statusHistory, ...rest } = deal;
+  // images/documents — это файловые колонки PocketBase, ими управляют отдельные
+  // FormData-вызовы (uploadDealFiles/removeDealFile), поэтому в JSON-данные их не кладём.
+  const { id, statusHistory, images, documents, ...rest } = deal;
   return {
     name: deal.name || 'Без названия',
     type: deal.type || '',
@@ -204,6 +213,11 @@ interface DealContextType {
   saveDeal: (deal: Deal) => Promise<void>;
   deleteDeal: (id: string) => Promise<void>;
   reload: () => Promise<void>;
+  // Файлы сделки (изображения/документы).
+  uploadDealFiles: (dealId: string, field: 'images' | 'documents', files: File[]) => Promise<void>;
+  removeDealFile: (dealId: string, field: 'images' | 'documents', filename: string) => Promise<void>;
+  // URL файла с file-токеном (доступ к owner-scoped файлам).
+  fileUrl: (dealId: string, filename: string, thumb?: string) => string;
 }
 
 const DealContext = createContext<DealContextType | undefined>(undefined);
@@ -213,6 +227,7 @@ export function DealProvider({ children }: { children: React.ReactNode }) {
   const [deals, setDeals] = useState<Deal[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [fileToken, setFileToken] = useState('');
 
   const loadDeals = useCallback(async () => {
     if (!pb.authStore.isValid) {
@@ -222,6 +237,9 @@ export function DealProvider({ children }: { children: React.ReactNode }) {
     setLoading(true);
     setError(null);
     try {
+      // file-токен нужен для доступа к owner-scoped файлам сделок (картинки/документы).
+      pb.files.getToken().then(setFileToken).catch(() => setFileToken(''));
+
       const [dealRecs, historyRecs] = await Promise.all([
         pb.collection('deals').getFullList({ sort: '-created' }),
         pb.collection('status_history').getFullList({ sort: 'created' }),
@@ -293,8 +311,43 @@ export function DealProvider({ children }: { children: React.ReactNode }) {
     }
   }, [loadDeals]);
 
+  // Загрузка файлов: добавляем к множественному файловому полю (синтаксис "field+").
+  const uploadDealFiles = useCallback(async (dealId: string, field: 'images' | 'documents', files: File[]) => {
+    if (!files.length) return;
+    const fd = new FormData();
+    files.forEach(file => fd.append(`${field}+`, file));
+    try {
+      await pb.collection('deals').update(dealId, fd);
+      await loadDeals();
+    } catch (e) {
+      console.error('Не удалось загрузить файлы', e);
+      throw e;
+    }
+  }, [loadDeals]);
+
+  // Удаление конкретного файла из множественного поля (синтаксис "field-").
+  const removeDealFile = useCallback(async (dealId: string, field: 'images' | 'documents', filename: string) => {
+    try {
+      await pb.collection('deals').update(dealId, { [`${field}-`]: [filename] });
+      await loadDeals();
+    } catch (e) {
+      console.error('Не удалось удалить файл', e);
+      throw e;
+    }
+  }, [loadDeals]);
+
+  // URL файла сделки с file-токеном и (опц.) превью-размером.
+  const fileUrl = useCallback((dealId: string, filename: string, thumb?: string) => {
+    const base = pb.baseURL.endsWith('/') ? pb.baseURL.slice(0, -1) : pb.baseURL;
+    const params = new URLSearchParams();
+    if (fileToken) params.set('token', fileToken);
+    if (thumb) params.set('thumb', thumb);
+    const qs = params.toString();
+    return `${base}/api/files/deals/${dealId}/${filename}${qs ? `?${qs}` : ''}`;
+  }, [fileToken]);
+
   return (
-    <DealContext.Provider value={{ deals, loading, error, saveDeal, deleteDeal, reload: loadDeals }}>
+    <DealContext.Provider value={{ deals, loading, error, saveDeal, deleteDeal, reload: loadDeals, uploadDealFiles, removeDealFile, fileUrl }}>
       {children}
     </DealContext.Provider>
   );
