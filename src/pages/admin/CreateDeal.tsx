@@ -16,7 +16,9 @@ import {
   Trash2, 
   Plus, 
   Info,
-  ChevronDown
+  ChevronDown,
+  CheckCircle2,
+  AlertCircle
 } from 'lucide-react';
 import { useDeals, Deal } from '../../context/DealContext';
 import { calculateDealMetrics } from '../../utils/mathCore';
@@ -444,6 +446,21 @@ export default function CreateDeal() {
     return Object.keys(validationErrors).length === 0;
   }, [validationErrors]);
 
+  // Живой статус по шагам формы: к какому блоку относятся незаполненные обязательные поля.
+  const steps = useMemo(() => {
+    const stepFields: Record<number, string[]> = {
+      1: ['name', 'areaSqm'],
+      2: ['propertyPrice'],
+      3: ['ownMoney', 'loanAnnualRate', 'loanMonthlyPayment', 'loanInterest'],
+    };
+    return [
+      { n: 1, label: 'Информация', ref: block1Ref },
+      { n: 2, label: 'Формат участия', ref: block2Ref },
+      { n: 3, label: 'Финансы', ref: block3Ref },
+    ].map(s => ({ ...s, errors: stepFields[s.n].filter(k => validationErrors[k]).length }));
+  }, [validationErrors]);
+  const missing = Object.values(validationErrors);
+
   // Submit deal saving
   const handleSubmit = (isDraft = false) => {
     if (!isDraft && !canSave) {
@@ -567,18 +584,39 @@ export default function CreateDeal() {
         </div>
       </div>
 
-      {/* Navigation Shortcuts */}
+      {/* Шаги формы со статусом заполнения (обновляются на лету) */}
       <div className="flex flex-wrap gap-2">
-        <button onClick={() => scrollToBlock(block1Ref)} className="px-4 py-2 bg-surface border border-line hover:border-slate-400 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all text-slate-600">
-          1. Информация
-        </button>
-        <button onClick={() => scrollToBlock(block2Ref)} className="px-4 py-2 bg-surface border border-line hover:border-slate-400 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all text-slate-600">
-          2. Формат участия
-        </button>
-        <button onClick={() => scrollToBlock(block3Ref)} className="px-4 py-2 bg-surface border border-line hover:border-slate-400 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all text-slate-600">
-          3. Финансы
-        </button>
+        {steps.map(s => (
+          <button
+            key={s.n}
+            onClick={() => scrollToBlock(s.ref)}
+            className={`flex items-center gap-2 px-4 py-2.5 rounded-xl border text-[10px] font-black uppercase tracking-widest transition-all ${
+              s.errors
+                ? 'border-amber-500/40 bg-amber-500/5 text-amber-600 hover:bg-amber-500/10'
+                : 'border-emerald-500/30 bg-emerald-500/5 text-emerald-600 hover:bg-emerald-500/10'
+            }`}
+          >
+            {s.errors ? <AlertCircle size={14} /> : <CheckCircle2 size={14} />}
+            {s.n}. {s.label}
+          </button>
+        ))}
       </div>
+
+      {/* Живая сводка незаполненного (без ожидания «Сохранить») */}
+      {missing.length > 0 ? (
+        <div className="bg-amber-500/5 border border-amber-500/20 rounded-xl p-4 flex flex-col gap-2">
+          <div className="flex items-center gap-2 text-[11px] font-black uppercase tracking-widest text-amber-600">
+            <AlertCircle size={14} /> Чтобы добавить в портфель, заполните:
+          </div>
+          <ul className="text-xs text-slate-400 font-medium list-disc pl-6 space-y-0.5">
+            {missing.map((m, i) => <li key={i}>{m}</li>)}
+          </ul>
+        </div>
+      ) : (
+        <div className="bg-emerald-500/5 border border-emerald-500/20 rounded-xl p-4 flex items-center gap-2 text-[11px] font-black uppercase tracking-widest text-emerald-600">
+          <CheckCircle2 size={14} /> Все обязательные поля заполнены — можно добавлять в портфель
+        </div>
+      )}
 
       {/* Main Grid: Form Left, Sidebar Right */}
       <div className="grid grid-cols-1 xl:grid-cols-[1fr_380px] gap-8">
@@ -1694,9 +1732,12 @@ export default function CreateDeal() {
           >
             Сохранить черновик
           </button>
-          <button 
+          <button
             onClick={() => handleSubmit(false)}
-            className="flex items-center gap-2 px-6 py-2.5 bg-emerald-500 text-white font-black text-xs uppercase tracking-widest rounded-xl hover:bg-emerald-400 transition-all shadow-lg shadow-emerald-500/20"
+            title={canSave ? 'Добавить в портфель' : 'Заполните обязательные поля'}
+            className={`flex items-center gap-2 px-6 py-2.5 text-white font-black text-xs uppercase tracking-widest rounded-xl transition-all shadow-lg shadow-emerald-500/20 ${
+              canSave ? 'bg-emerald-500 hover:bg-emerald-400' : 'bg-emerald-500/40 hover:bg-emerald-500/50'
+            }`}
           >
             <Save size={16} /> Добавить в портфель
           </button>
