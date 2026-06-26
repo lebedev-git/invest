@@ -36,6 +36,7 @@ import { Link } from 'react-router-dom';
 import { useDeals, Deal } from '../context/DealContext';
 import { useAuth } from '../context/AuthContext';
 import { useTheme } from '../context/ThemeContext';
+import { useSidebarCollapse } from '../hooks/useSidebarCollapse';
 import { statusColor, cleanLabel, getStageProgress } from '../utils/dealDisplay';
 import { LoadingState, ErrorState } from '../components/AsyncState';
 
@@ -131,10 +132,11 @@ const NAV: NavConfig[] = [
   { id: 'payments', label: 'Выплаты', icon: Calendar },
 ];
 
-const NavItems = ({ activeTab, setActiveTab, compact }: {
+const NavItems = ({ activeTab, setActiveTab, compact, collapsed }: {
   activeTab: string;
   setActiveTab: (tab: string) => void;
   compact?: boolean;
+  collapsed?: boolean;
 }) => (
   <>
     {NAV.map(item => {
@@ -144,12 +146,13 @@ const NavItems = ({ activeTab, setActiveTab, compact }: {
         <button
           key={item.id}
           onClick={() => setActiveTab(item.id)}
-          className={`relative flex items-center gap-3 rounded-xl font-bold transition-all ${compact ? 'px-3 py-2 text-xs' : 'px-4 py-3.5 text-[13px]'} ${active
+          title={collapsed ? item.label : undefined}
+          className={`relative flex items-center gap-3 rounded-xl font-bold transition-all ${compact ? 'px-3 py-2 text-xs' : 'px-4 py-3.5 text-[13px]'} ${collapsed ? 'justify-center' : ''} ${active
             ? 'bg-[#10b981]/15 text-[#10b981]'
             : 'text-slate-400 hover:text-slate-100 hover:bg-surface-2'}`}
         >
           <Icon size={compact ? 16 : 18} />
-          {item.label}
+          {!collapsed && item.label}
         </button>
       );
     })}
@@ -161,42 +164,60 @@ const roleLabel = (role?: string | null) =>
 
 const Sidebar = ({ activeTab, setActiveTab }: { activeTab: string; setActiveTab: (tab: string) => void }) => {
   const { user, role, signOut } = useAuth();
+  const { collapsed, toggle } = useSidebarCollapse();
   return (
-    <aside className="hidden lg:flex flex-col w-64 shrink-0 bg-surface border-r border-line p-5">
-      <div className="flex items-center justify-between gap-3 px-2 mb-8 mt-2">
-        <div className="flex items-center gap-3">
+    <aside className={`hidden lg:flex flex-col shrink-0 bg-surface border-r border-line p-3 transition-[width] duration-200 ${collapsed ? 'w-[76px]' : 'w-64'}`}>
+      <div className={`flex items-center mb-6 mt-1 ${collapsed ? 'flex-col gap-3' : 'justify-between gap-3 px-2'}`}>
+        {collapsed ? (
           <X7Logo />
-          <span className="text-xl font-bold tracking-tight text-slate-100 uppercase">Портфель</span>
-        </div>
-        <ThemeToggle compact />
+        ) : (
+          <div className="flex items-center gap-3 min-w-0">
+            <X7Logo />
+            <span className="text-xl font-bold tracking-tight text-slate-100 uppercase truncate">Портфель</span>
+          </div>
+        )}
+        <button
+          onClick={toggle}
+          title={collapsed ? 'Развернуть меню' : 'Свернуть меню'}
+          className="w-8 h-8 flex items-center justify-center rounded-xl border border-line bg-surface-2 text-slate-400 hover:text-slate-100 hover:border-emerald-500/30 transition-all cursor-pointer shrink-0"
+        >
+          {collapsed ? <ChevronRight size={16} /> : <ChevronLeft size={16} />}
+        </button>
       </div>
 
       <nav className="flex flex-col gap-1.5">
-        <NavItems activeTab={activeTab} setActiveTab={setActiveTab} />
+        <NavItems activeTab={activeTab} setActiveTab={setActiveTab} collapsed={collapsed} />
         <Link
           to="/deals"
-          className="flex items-center gap-3 px-4 py-3.5 mt-2 rounded-xl text-[13px] font-bold text-emerald-600 border border-emerald-500/30 bg-emerald-500/5 hover:bg-emerald-500/10 hover:text-emerald-500 transition-all"
+          title={collapsed ? 'Создать сделку' : undefined}
+          className={`flex items-center gap-3 mt-2 rounded-xl text-[13px] font-bold text-emerald-600 border border-emerald-500/30 bg-emerald-500/5 hover:bg-emerald-500/10 hover:text-emerald-500 transition-all ${collapsed ? 'justify-center px-0 py-3.5' : 'px-4 py-3.5'}`}
         >
-          <Plus size={18} /> Создать сделку
+          <Plus size={18} /> {!collapsed && 'Создать сделку'}
         </Link>
       </nav>
 
       <div className="mt-auto flex flex-col gap-3 pt-6">
-        <div className="flex items-center gap-3 px-3 py-3 rounded-xl bg-surface-2 border border-line">
-          <div className="w-9 h-9 rounded-lg bg-[#10b981]/15 text-[#10b981] flex items-center justify-center shrink-0">
-            <Building2 size={18} />
+        {!collapsed && (
+          <div className="flex items-center gap-3 px-3 py-3 rounded-xl bg-surface-2 border border-line">
+            <div className="w-9 h-9 rounded-lg bg-[#10b981]/15 text-[#10b981] flex items-center justify-center shrink-0">
+              <Building2 size={18} />
+            </div>
+            <div className="min-w-0 flex-1">
+              <p className="text-xs font-bold text-slate-100 truncate">{user?.full_name || user?.email || 'Аккаунт'}</p>
+              <p className="text-[10px] text-slate-500 font-medium truncate">{roleLabel(role)}</p>
+            </div>
           </div>
-          <div className="min-w-0 flex-1">
-            <p className="text-xs font-bold text-slate-100 truncate">{user?.full_name || user?.email || 'Аккаунт'}</p>
-            <p className="text-[10px] text-slate-500 font-medium truncate">{roleLabel(role)}</p>
-          </div>
+        )}
+        <div className={`flex gap-2 ${collapsed ? 'flex-col items-center' : 'items-center'}`}>
+          <ThemeToggle compact />
+          <button
+            onClick={signOut}
+            title="Выйти"
+            className={`flex items-center justify-center gap-2 rounded-xl bg-surface-2 border border-line text-[10px] font-black uppercase tracking-widest text-slate-300 hover:text-rose-400 hover:border-rose-500/40 transition-all ${collapsed ? 'w-8 h-8' : 'flex-1 px-4 py-3'}`}
+          >
+            <LogOut size={14} /> {!collapsed && 'Выйти'}
+          </button>
         </div>
-        <button
-          onClick={signOut}
-          className="flex items-center justify-center gap-2 px-4 py-3 rounded-xl bg-surface-2 border border-line text-[10px] font-black uppercase tracking-widest text-slate-300 hover:text-rose-400 hover:border-rose-500/40 transition-all"
-        >
-          <LogOut size={14} /> Выйти
-        </button>
       </div>
     </aside>
   );
@@ -423,7 +444,7 @@ const ForecastControls = ({ config, onChange }: { config: ForecastConfig; onChan
         <button
           key={item.id}
           onClick={() => onChange({ ...config, mode: item.id as ForecastMode })}
-        className={`w-full min-w-0 px-3 py-2 rounded-xl text-[9px] font-black uppercase tracking-widest border transition-colors whitespace-nowrap cursor-pointer ${config.mode === item.id ? 'bg-slate-100 text-slate-950 border-slate-100' : 'bg-surface-2 text-slate-400 border-line hover:bg-surface-2/80 hover:text-slate-100'}`}
+        className={`w-full min-w-0 px-3 py-2 rounded-xl text-[9px] font-black uppercase tracking-widest border transition-colors whitespace-nowrap cursor-pointer ${config.mode === item.id ? 'bg-emerald-500 text-white border-emerald-500' : 'bg-surface-2 text-slate-400 border-line hover:bg-surface-2/80 hover:text-slate-100'}`}
         >
           {item.label}
         </button>
@@ -511,7 +532,7 @@ const SummaryCard = ({ forecastConfig, setForecastConfig, currencyState }: {
               <button
                 key={item}
                 onClick={() => setCurrency(item)}
-                className={`px-3 py-1 rounded-full text-[9px] font-black uppercase tracking-wider transition-colors cursor-pointer ${currency === item ? 'bg-slate-100 text-slate-950 font-bold' : 'text-slate-400 hover:text-slate-100'}`}
+                className={`px-3 py-1 rounded-full text-[9px] font-black uppercase tracking-wider transition-colors cursor-pointer ${currency === item ? 'bg-emerald-500 text-white font-bold' : 'text-slate-400 hover:text-slate-100'}`}
               >
                 {item}
               </button>
@@ -890,7 +911,7 @@ const ProjectsCards = ({ forecastConfig, onSelectProject, currencyState }: {
               e.stopPropagation();
               scrollRight();
             }}
-            className="absolute right-4 z-10 w-10 h-10 rounded-full bg-surface/80 border border-line text-white flex items-center justify-center hover:bg-surface hover:border-[#10b981]/50 shadow-xl transition-all"
+            className="absolute right-4 z-10 w-10 h-10 rounded-full bg-surface border border-line text-slate-500 flex items-center justify-center hover:text-emerald-500 hover:border-[#10b981]/50 shadow-xl transition-all"
           >
             <ChevronRight size={20} />
           </button>
@@ -1352,12 +1373,12 @@ export default function Portal() {
   const { deals, loading, error, reload } = useDeals();
 
   return (
-    <div className="min-h-screen w-full bg-base text-slate-100 font-sans flex selection:bg-emerald-500 selection:text-white">
+    <div className="h-screen w-full bg-base text-slate-100 font-sans flex overflow-hidden selection:bg-emerald-500 selection:text-white">
       <Sidebar activeTab={activeTab} setActiveTab={setActiveTab} />
 
-      <div className="flex-1 min-w-0 flex flex-col">
+      <div className="flex-1 min-w-0 flex flex-col overflow-hidden">
         <MobileBar activeTab={activeTab} setActiveTab={setActiveTab} />
-        <main className="flex-1 p-4 lg:p-8">
+        <main className="flex-1 overflow-y-auto p-4 lg:p-6">
           <div className="max-w-[1600px] mx-auto w-full">
             {error ? (
               <ErrorState message={error} onRetry={reload} />

@@ -249,7 +249,7 @@ export default function Login() {
         className="w-full max-w-sm card p-8"
       >
         <div className="flex flex-col items-center text-center mb-8">
-          <X7Logo className="w-12 h-12 mb-4" />
+          <X7Logo className="w-12 h-12 mb-4" textClassName="text-lg" />
           <h1 className="text-2xl font-black tracking-tight text-slate-50">
             {isSignup ? 'Регистрация' : 'Вход в систему'}
           </h1>
