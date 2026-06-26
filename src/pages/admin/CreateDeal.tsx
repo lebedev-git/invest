@@ -560,7 +560,7 @@ export default function CreateDeal() {
           </button>
           <button 
             onClick={() => handleSubmit(true)}
-            className="px-5 py-2.5 bg-surface-2 text-slate-300 font-black text-xs uppercase tracking-widest rounded-xl hover:bg-white/10 transition-all shadow-sm"
+            className="px-5 py-2.5 bg-surface-2 text-slate-300 font-black text-xs uppercase tracking-widest rounded-xl hover:bg-surface-2 transition-all shadow-sm"
           >
             Сохранить черновик
           </button>
@@ -720,7 +720,7 @@ export default function CreateDeal() {
                     <button
                       type="button"
                       onClick={() => setAdditional({...additional, separateEntrance: !additional.separateEntrance})}
-                      className={`w-10 h-6 rounded-full p-1 transition-colors duration-200 focus:outline-none ${additional.separateEntrance ? 'bg-emerald-500' : 'bg-white/10'}`}
+                      className={`w-10 h-6 rounded-full p-1 transition-colors duration-200 focus:outline-none ${additional.separateEntrance ? 'bg-emerald-500' : 'bg-track-off'}`}
                     >
                       <div className={`w-4 h-4 rounded-full bg-surface shadow-sm transform transition-transform duration-200 ${additional.separateEntrance ? 'translate-x-4' : 'translate-x-0'}`}></div>
                     </button>
@@ -730,7 +730,7 @@ export default function CreateDeal() {
                     <button
                       type="button"
                       onClick={() => setAdditional({...additional, showcases: !additional.showcases})}
-                      className={`w-10 h-6 rounded-full p-1 transition-colors duration-200 focus:outline-none ${additional.showcases ? 'bg-emerald-500' : 'bg-white/10'}`}
+                      className={`w-10 h-6 rounded-full p-1 transition-colors duration-200 focus:outline-none ${additional.showcases ? 'bg-emerald-500' : 'bg-track-off'}`}
                     >
                       <div className={`w-4 h-4 rounded-full bg-surface shadow-sm transform transition-transform duration-200 ${additional.showcases ? 'translate-x-4' : 'translate-x-0'}`}></div>
                     </button>
@@ -740,7 +740,7 @@ export default function CreateDeal() {
                     <button
                       type="button"
                       onClick={() => setAdditional({...additional, parking: !additional.parking})}
-                      className={`w-10 h-6 rounded-full p-1 transition-colors duration-200 focus:outline-none ${additional.parking ? 'bg-emerald-500' : 'bg-white/10'}`}
+                      className={`w-10 h-6 rounded-full p-1 transition-colors duration-200 focus:outline-none ${additional.parking ? 'bg-emerald-500' : 'bg-track-off'}`}
                     >
                       <div className={`w-4 h-4 rounded-full bg-surface shadow-sm transform transition-transform duration-200 ${additional.parking ? 'translate-x-4' : 'translate-x-0'}`}></div>
                     </button>
@@ -832,7 +832,7 @@ export default function CreateDeal() {
                     <button
                       type="button"
                       onClick={() => setParticipationDetails({...participationDetails, hasAgreement: !participationDetails.hasAgreement})}
-                      className={`w-10 h-6 rounded-full p-1 transition-colors duration-200 focus:outline-none ${participationDetails.hasAgreement ? 'bg-emerald-500' : 'bg-white/10'}`}
+                      className={`w-10 h-6 rounded-full p-1 transition-colors duration-200 focus:outline-none ${participationDetails.hasAgreement ? 'bg-emerald-500' : 'bg-track-off'}`}
                     >
                       <div className={`w-4 h-4 rounded-full bg-surface shadow-sm transform transition-transform duration-200 ${participationDetails.hasAgreement ? 'translate-x-4' : 'translate-x-0'}`}></div>
                     </button>
@@ -877,7 +877,7 @@ export default function CreateDeal() {
                     <button
                       type="button"
                       onClick={() => setParticipationDetails({...participationDetails, companyOwnsObject: !participationDetails.companyOwnsObject})}
-                      className={`w-10 h-6 rounded-full p-1 transition-colors duration-200 focus:outline-none ${participationDetails.companyOwnsObject ? 'bg-emerald-500' : 'bg-white/10'}`}
+                      className={`w-10 h-6 rounded-full p-1 transition-colors duration-200 focus:outline-none ${participationDetails.companyOwnsObject ? 'bg-emerald-500' : 'bg-track-off'}`}
                     >
                       <div className={`w-4 h-4 rounded-full bg-surface shadow-sm transform transition-transform duration-200 ${participationDetails.companyOwnsObject ? 'translate-x-4' : 'translate-x-0'}`}></div>
                     </button>
@@ -1058,7 +1058,7 @@ export default function CreateDeal() {
                     <button
                       type="button"
                       onClick={() => setParticipationDetails({...participationDetails, hasAgreement: !participationDetails.hasAgreement})}
-                      className={`w-10 h-6 rounded-full p-1 transition-colors duration-200 focus:outline-none ${participationDetails.hasAgreement ? 'bg-emerald-500' : 'bg-white/10'}`}
+                      className={`w-10 h-6 rounded-full p-1 transition-colors duration-200 focus:outline-none ${participationDetails.hasAgreement ? 'bg-emerald-500' : 'bg-track-off'}`}
                     >
                       <div className={`w-4 h-4 rounded-full bg-surface shadow-sm transform transition-transform duration-200 ${participationDetails.hasAgreement ? 'translate-x-4' : 'translate-x-0'}`}></div>
                     </button>
@@ -1122,7 +1122,7 @@ export default function CreateDeal() {
                     <button
                       type="button"
                       onClick={() => setParticipationDetails({...participationDetails, hasContract: !participationDetails.hasContract})}
-                      className={`w-10 h-6 rounded-full p-1 transition-colors duration-200 focus:outline-none ${participationDetails.hasContract ? 'bg-emerald-500' : 'bg-white/10'}`}
+                      className={`w-10 h-6 rounded-full p-1 transition-colors duration-200 focus:outline-none ${participationDetails.hasContract ? 'bg-emerald-500' : 'bg-track-off'}`}
                     >
                       <div className={`w-4 h-4 rounded-full bg-surface shadow-sm transform transition-transform duration-200 ${participationDetails.hasContract ? 'translate-x-4' : 'translate-x-0'}`}></div>
                     </button>
@@ -1478,7 +1478,7 @@ export default function CreateDeal() {
                           <button
                             type="button"
                             onClick={() => updateTenant(t.id, 'rentHolidays', !t.rentHolidays)}
-                            className={`w-10 h-6 rounded-full p-1 transition-colors duration-200 focus:outline-none ${t.rentHolidays ? 'bg-emerald-500' : 'bg-white/10'}`}
+                            className={`w-10 h-6 rounded-full p-1 transition-colors duration-200 focus:outline-none ${t.rentHolidays ? 'bg-emerald-500' : 'bg-track-off'}`}
                           >
                             <div className={`w-4 h-4 rounded-full bg-surface shadow-sm transform transition-transform duration-200 ${t.rentHolidays ? 'translate-x-4' : 'translate-x-0'}`}></div>
                           </button>
@@ -1690,7 +1690,7 @@ export default function CreateDeal() {
         <div className="flex gap-3">
           <button 
             onClick={() => handleSubmit(true)}
-            className="px-5 py-2.5 bg-surface-2 text-slate-300 font-black text-xs uppercase tracking-widest rounded-xl hover:bg-white/10 transition-all shadow-sm"
+            className="px-5 py-2.5 bg-surface-2 text-slate-300 font-black text-xs uppercase tracking-widest rounded-xl hover:bg-surface-2 transition-all shadow-sm"
           >
             Сохранить черновик
           </button>

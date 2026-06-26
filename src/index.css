@@ -24,7 +24,10 @@
   
   --shadow-color: rgba(0, 0, 0, 0.04);
   --shadow-color-hover: rgba(16, 185, 129, 0.1);
-  
+
+  /* Трек выключенного тумблера: видимый серый на белом фоне */
+  --track-off-bg: #cbd5e1;
+
   --calendar-invert: 0;
 }
 
@@ -51,7 +54,10 @@
 
   --shadow-color: rgba(0, 0, 0, 0.3);
   --shadow-color-hover: rgba(16, 185, 129, 0.2);
-  
+
+  /* На тёмной теме — прежнее полупрозрачное белое */
+  --track-off-bg: rgba(255, 255, 255, 0.1);
+
   --calendar-invert: 0.7;
 }
 
@@ -60,6 +66,7 @@
   --color-surface: var(--surface-bg);
   --color-surface-2: var(--surface-2-bg);
   --color-line: var(--line-color);
+  --color-track-off: var(--track-off-bg);
 
   --color-slate-50: var(--text-50);
   --color-slate-100: var(--text-100);

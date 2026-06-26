@@ -185,9 +185,9 @@ const Sidebar = ({ activeTab, setActiveTab }: { activeTab: string; setActiveTab:
         <NavItems activeTab={activeTab} setActiveTab={setActiveTab} />
         <Link
           to="/deals"
-          className="flex items-center gap-3 px-4 py-3.5 rounded-xl text-[13px] font-bold text-slate-400 hover:text-slate-100 hover:bg-surface-2 transition-all"
+          className="flex items-center gap-3 px-4 py-3.5 mt-2 rounded-xl text-[13px] font-bold text-emerald-600 border border-emerald-500/30 bg-emerald-500/5 hover:bg-emerald-500/10 hover:text-emerald-500 transition-all"
         >
-          <Plus size={18} /> Создание сделок
+          <Plus size={18} /> Создать сделку
         </Link>
       </nav>
 
@@ -219,8 +219,8 @@ const MobileBar = ({ activeTab, setActiveTab }: { activeTab: string; setActiveTa
       <X7Logo />
       <nav className="flex items-center gap-1">
         <NavItems activeTab={activeTab} setActiveTab={setActiveTab} compact />
-        <Link to="/deals" className="flex items-center gap-2 px-3 py-2 rounded-xl text-xs font-semibold text-slate-400 hover:text-slate-100 hover:bg-surface-2 whitespace-nowrap">
-          <Plus size={16} /> Сделки
+        <Link to="/deals" className="flex items-center gap-2 px-3 py-2 rounded-xl text-xs font-bold text-emerald-600 border border-emerald-500/30 bg-emerald-500/5 hover:bg-emerald-500/10 hover:text-emerald-500 whitespace-nowrap">
+          <Plus size={16} /> Создать
         </Link>
       </nav>
       <div className="ml-auto flex items-center gap-3">
@@ -634,7 +634,7 @@ const paymentStyles: Record<PaymentStatus, { dot: string; card: string; text: st
   expected: { dot: 'bg-amber-400', card: 'bg-amber-500/10 border-amber-500/20', text: 'text-amber-300' },
   paid: { dot: 'bg-emerald-500', card: 'bg-emerald-500/10 border-emerald-500/20', text: 'text-emerald-300' },
   overdue: { dot: 'bg-rose-500', card: 'bg-rose-500/10 border-rose-500/20', text: 'text-rose-300' },
-  closing: { dot: 'bg-slate-400', card: 'bg-white/5 border-line', text: 'text-slate-300' },
+  closing: { dot: 'bg-slate-400', card: 'bg-surface-2 border-line', text: 'text-slate-300' },
 };
 
 const getPaymentEvents = (deals: Deal[]) => {
@@ -878,7 +878,7 @@ const ProjectsCards = ({ forecastConfig, onSelectProject, currencyState }: {
 
                     <div className="mt-auto pt-2">
                       <div className="flex items-center gap-3">
-                        <div className="flex-1 h-1.5 rounded-full bg-slate-800 overflow-hidden">
+                        <div className="flex-1 h-1.5 rounded-full bg-surface-2 overflow-hidden">
                           <div className={`h-full rounded-full ${progressBarColor}`} style={{ width: `${progress}%` }}></div>
                         </div>
                         <span className="text-xs font-bold text-slate-300">{progress}%</span>
@@ -906,7 +906,21 @@ const ProjectsCards = ({ forecastConfig, onSelectProject, currencyState }: {
           </button>
         </div>
       ) : (
-        <div className="p-12 text-center text-slate-500 font-medium italic text-sm">У вас пока нет активных инвестиций.</div>
+        <div className="flex-1 flex flex-col items-center justify-center gap-4 p-12 text-center">
+          <div className="w-14 h-14 rounded-2xl bg-emerald-500/10 text-emerald-500 flex items-center justify-center">
+            <Layers size={26} />
+          </div>
+          <div className="flex flex-col gap-1">
+            <p className="text-slate-200 font-bold text-sm">Сделок пока нет</p>
+            <p className="text-slate-500 font-medium text-xs max-w-xs">Создайте первую сделку — она появится в вашем портфеле.</p>
+          </div>
+          <Link
+            to="/deals"
+            className="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-emerald-500 text-white text-[11px] font-black uppercase tracking-widest hover:bg-emerald-400 transition-all shadow-lg shadow-emerald-500/20"
+          >
+            <Plus size={14} /> Создать сделку
+          </Link>
+        </div>
       )}
     </section>
   );
@@ -1093,19 +1107,19 @@ const ProjectDetailPage = ({ deal, forecastConfig, setForecastConfig, onBack }: 
           </div>
 
           <div className="grid grid-cols-2 gap-4 content-start">
-            <div className="border border-line rounded-2xl p-4 bg-white/5">
+            <div className="border border-line rounded-2xl p-4 bg-surface-2">
               <p className="text-[9px] uppercase text-slate-500 font-black mb-1">Вложено</p>
               <p className="text-xl font-semibold tabular-nums text-slate-100">{formatRub(capital)}</p>
             </div>
-            <div className="border border-line rounded-2xl p-4 bg-white/5">
+            <div className="border border-line rounded-2xl p-4 bg-surface-2">
               <p className="text-[9px] uppercase text-slate-500 font-black mb-1">Фактически выплачено</p>
               <p className="text-xl font-semibold tabular-nums text-slate-100">{formatRub(deal.paidOut || 0)}</p>
             </div>
-            <div className="border border-line rounded-2xl p-4 bg-white/5">
+            <div className="border border-line rounded-2xl p-4 bg-surface-2">
               <p className="text-[9px] uppercase text-slate-500 font-black mb-1">Прогноз ₽</p>
               <p className={`text-xl font-semibold tabular-nums ${projectedIncome >= 0 ? 'text-emerald-400' : 'text-rose-300'}`}>{formatSignedRub(projectedIncome)}</p>
             </div>
-            <div className="border border-line rounded-2xl p-4 bg-white/5">
+            <div className="border border-line rounded-2xl p-4 bg-surface-2">
               <p className="text-[9px] uppercase text-slate-500 font-black mb-1">Окупаемость</p>
               <p className={`text-xl font-semibold tabular-nums ${paybackYears ? 'text-slate-100' : 'text-rose-300'}`}>{paybackYears ? `${paybackYears.toFixed(2)} лет` : `${projectedPercent.toFixed(1)}%`}</p>
             </div>
@@ -1230,7 +1244,7 @@ const AnalyticsPage = () => {
                     const positive = item.value >= 0;
                     return (
                       <div key={item.name} className="flex-1 flex flex-col items-center gap-2 group h-full justify-end min-w-0">
-                        <div className="w-full bg-slate-800 rounded-t-lg relative h-[85%] flex items-end">
+                        <div className="w-full bg-surface-2 rounded-t-lg relative h-[85%] flex items-end">
                           <div
                             className={`w-full ${positive ? 'bg-[#10b981]' : 'bg-rose-500'} transition-all rounded-t-lg relative`}
                             style={{ height: `${heightPercent}%` }}
@@ -1260,7 +1274,7 @@ const AnalyticsPage = () => {
                         <span className="text-slate-400 font-medium">{item.label}</span>
                         <span className="font-bold text-slate-200">{item.percent.toFixed(0)}%</span>
                       </div>
-                      <div className="w-full bg-slate-800 h-1.5 rounded-full overflow-hidden">
+                      <div className="w-full bg-surface-2 h-1.5 rounded-full overflow-hidden">
                         <div className={`${ALLOCATION_STYLES[item.label] || 'bg-[#5b21b6]'} h-full`} style={{ width: `${item.percent}%` }}></div>
                       </div>
                     </div>
