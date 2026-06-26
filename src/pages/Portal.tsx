@@ -32,7 +32,7 @@ import {
   Moon,
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { useDeals, Deal } from '../context/DealContext';
 import { useAuth } from '../context/AuthContext';
 import { useTheme } from '../context/ThemeContext';
@@ -117,349 +117,7 @@ const getProgressBarColor = (progress: number) => {
   return 'bg-[#f97316]';
 };
 
-// --- Sidebar / Layout ---
-
-interface NavConfig {
-  id: string;
-  label: string;
-  icon: React.ComponentType<{ size?: number; className?: string }>;
-}
-
-const NAV: NavConfig[] = [
-  { id: 'portfolio', label: 'Главная', icon: Home },
-  { id: 'new-projects', label: 'Проекты', icon: Layers },
-  { id: 'analytics', label: 'Аналитика', icon: BarChart2 },
-  { id: 'payments', label: 'Выплаты', icon: Calendar },
-];
-
-const NavItems = ({ activeTab, setActiveTab, compact, collapsed }: {
-  activeTab: string;
-  setActiveTab: (tab: string) => void;
-  compact?: boolean;
-  collapsed?: boolean;
-}) => (
-  <>
-    {NAV.map(item => {
-      const Icon = item.icon;
-      const active = activeTab === item.id;
-      return (
-        <button
-          key={item.id}
-          onClick={() => setActiveTab(item.id)}
-          title={collapsed ? item.label : undefined}
-          className={`relative flex items-center gap-3 rounded-xl font-bold transition-all ${compact ? 'px-3 py-2 text-xs' : 'px-4 py-3.5 text-[13px]'} ${collapsed ? 'justify-center' : ''} ${active
-            ? 'bg-[#10b981]/15 text-[#10b981]'
-            : 'text-slate-400 hover:text-slate-100 hover:bg-surface-2'}`}
-        >
-          <Icon size={compact ? 16 : 18} />
-          {!collapsed && item.label}
-        </button>
-      );
-    })}
-  </>
-);
-
-const roleLabel = (role?: string | null) =>
-  role === 'committee' ? 'Управляющий счет' : 'Партнёр-инвестор';
-
-const Sidebar = ({ activeTab, setActiveTab }: { activeTab: string; setActiveTab: (tab: string) => void }) => {
-  const { user, role, signOut } = useAuth();
-  const { collapsed, toggle } = useSidebarCollapse();
-  return (
-    <aside className={`hidden lg:flex flex-col shrink-0 bg-surface border-r border-line p-3 transition-[width] duration-200 ${collapsed ? 'w-[76px]' : 'w-64'}`}>
-      <div className={`flex items-center mb-6 mt-1 ${collapsed ? 'flex-col gap-3' : 'justify-between gap-3 px-2'}`}>
-        {collapsed ? (
-          <X7Logo />
-        ) : (
-          <div className="flex items-center gap-3 min-w-0">
-            <X7Logo />
-            <span className="text-xl font-bold tracking-tight text-slate-100 uppercase truncate">Портфель</span>
-          </div>
-        )}
-        <button
-          onClick={toggle}
-          title={collapsed ? 'Развернуть меню' : 'Свернуть меню'}
-          className="w-8 h-8 flex items-center justify-center rounded-xl border border-line bg-surface-2 text-slate-400 hover:text-slate-100 hover:border-emerald-500/30 transition-all cursor-pointer shrink-0"
-        >
-          {collapsed ? <ChevronRight size={16} /> : <ChevronLeft size={16} />}
-        </button>
-      </div>
-
-      <nav className="flex flex-col gap-1.5">
-        <NavItems activeTab={activeTab} setActiveTab={setActiveTab} collapsed={collapsed} />
-        <Link
-          to="/deals"
-          title={collapsed ? 'Создать сделку' : undefined}
-          className={`flex items-center gap-3 mt-2 rounded-xl text-[13px] font-bold text-emerald-600 border border-emerald-500/30 bg-emerald-500/5 hover:bg-emerald-500/10 hover:text-emerald-500 transition-all ${collapsed ? 'justify-center px-0 py-3.5' : 'px-4 py-3.5'}`}
-        >
-          <Plus size={18} /> {!collapsed && 'Создать сделку'}
-        </Link>
-      </nav>
-
-      <div className="mt-auto flex flex-col gap-3 pt-6">
-        {!collapsed && (
-          <div className="flex items-center gap-3 px-3 py-3 rounded-xl bg-surface-2 border border-line">
-            <div className="w-9 h-9 rounded-lg bg-[#10b981]/15 text-[#10b981] flex items-center justify-center shrink-0">
-              <Building2 size={18} />
-            </div>
-            <div className="min-w-0 flex-1">
-              <p className="text-xs font-bold text-slate-100 truncate">{user?.full_name || user?.email || 'Аккаунт'}</p>
-              <p className="text-[10px] text-slate-500 font-medium truncate">{roleLabel(role)}</p>
-            </div>
-          </div>
-        )}
-        <div className={`flex gap-2 ${collapsed ? 'flex-col items-center' : 'items-center'}`}>
-          <ThemeToggle compact />
-          <button
-            onClick={signOut}
-            title="Выйти"
-            className={`flex items-center justify-center gap-2 rounded-xl bg-surface-2 border border-line text-[10px] font-black uppercase tracking-widest text-slate-300 hover:text-rose-400 hover:border-rose-500/40 transition-all ${collapsed ? 'w-8 h-8' : 'flex-1 px-4 py-3'}`}
-          >
-            <LogOut size={14} /> {!collapsed && 'Выйти'}
-          </button>
-        </div>
-      </div>
-    </aside>
-  );
-};
-
-const MobileBar = ({ activeTab, setActiveTab }: { activeTab: string; setActiveTab: (tab: string) => void }) => {
-  const { signOut } = useAuth();
-  return (
-    <header className="lg:hidden sticky top-0 z-30 flex items-center gap-3 bg-surface/90 backdrop-blur border-b border-line px-4 py-3 overflow-x-auto">
-      <X7Logo />
-      <nav className="flex items-center gap-1">
-        <NavItems activeTab={activeTab} setActiveTab={setActiveTab} compact />
-        <Link to="/deals" className="flex items-center gap-2 px-3 py-2 rounded-xl text-xs font-bold text-emerald-600 border border-emerald-500/30 bg-emerald-500/5 hover:bg-emerald-500/10 hover:text-emerald-500 whitespace-nowrap">
-          <Plus size={16} /> Создать
-        </Link>
-      </nav>
-      <div className="ml-auto flex items-center gap-3">
-        <ThemeToggle compact />
-        <button onClick={signOut} title="Выйти" className="text-slate-500 hover:text-rose-400 transition-colors shrink-0 cursor-pointer">
-          <LogOut size={16} />
-        </button>
-      </div>
-    </header>
-  );
-};
-
-const NewProjectsPage = () => {
-  const { deals } = useDeals();
-  const activeDeals = deals.filter((d: any) => d.status === 'Сбор' || d.status === 'Сбор заявок' || d.status === 'Рассматривается');
-
-  return (
-    <motion.div
-      initial={{ opacity: 0, scale: 0.98 }}
-      animate={{ opacity: 1, scale: 1 }}
-      className="flex flex-col gap-8"
-    >
-      <div className="flex flex-col gap-2">
-        <h2 className="text-3xl font-black text-slate-100 tracking-tight">Новые инвестиционные возможности</h2>
-        <p className="text-slate-500 font-medium">Эксклюзивные предложения, отобранные аналитическим отделом X7 Invest</p>
-      </div>
-
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {activeDeals.length > 0 ? activeDeals.map((lot: any, idx: number) => (
-          <div key={idx} className="card p-8 flex flex-col gap-6 hover:border-emerald-500/30 transition-all group overflow-hidden relative">
-            <div className={`absolute top-0 right-0 w-24 h-24 blur-3xl opacity-25 transition-opacity group-hover:opacity-50 ${idx % 3 === 0 ? 'bg-violet-500' : idx % 3 === 1 ? 'bg-blue-500' : 'bg-emerald-500'}`}></div>
-
-            <div className="flex justify-between items-start z-10">
-              <span className="px-3 py-1 bg-surface-2 rounded-lg text-[10px] font-black uppercase text-slate-400 tracking-widest">{cleanLabel(lot.type)}</span>
-              <span className="text-emerald-400 font-black text-lg">
-                {getPaybackYears(lot) ? `${getPaybackYears(lot).toFixed(1)} г.` : `${lot.targetIrr || 0}%`}
-                <span className="text-xs opacity-60"> {getPaybackYears(lot) ? 'окуп.' : 'доходн.'}</span>
-              </span>
-            </div>
-
-            <div className="z-10">
-              <h3 className="text-xl font-black text-slate-100 leading-tight group-hover:text-emerald-300 transition-colors uppercase tracking-tight">{lot.name}</h3>
-              <p className="text-[10px] text-slate-500 font-bold uppercase mt-1">{cleanLabel(lot.city)}</p>
-            </div>
-
-            <p className="text-sm text-slate-400 leading-relaxed z-10 line-clamp-3">{lot.description || lot.strategy || 'Подробности по запросу'}</p>
-
-            <div className="grid grid-cols-2 gap-4 border-y border-line py-4 z-10">
-              <div>
-                <p className="text-[9px] uppercase text-slate-500 font-black mb-1">Срок реализации</p>
-                <p className="text-sm font-bold text-slate-100 font-mono">{lot.termDate ? new Date(lot.termDate).toLocaleDateString('ru-RU') : 'По запросу'}</p>
-              </div>
-              <div className="text-right">
-                <p className="text-[9px] uppercase text-slate-500 font-black mb-1">Статус</p>
-                <p className="text-sm font-bold text-slate-100 uppercase tracking-tighter">{cleanLabel(lot.status)}</p>
-              </div>
-            </div>
-
-            <button className="w-full py-4 bg-emerald-500 text-white rounded-2xl font-black text-[10px] uppercase tracking-[0.2em] shadow-lg shadow-emerald-500/20 hover:bg-emerald-400 transition-all z-10">
-              Ознакомиться с материалами
-            </button>
-          </div>
-        )) : (
-          <div className="col-span-full py-12 text-center text-slate-500 font-medium italic text-sm">
-            Нет доступных объектов для инвестирования.
-          </div>
-        )}
-      </div>
-    </motion.div>
-  );
-};
-
-const formatRub = (value: number) => `${Math.round(value).toLocaleString('ru-RU')} ₽`;
-const formatMln = (value: number) => `${(value / 1e6).toLocaleString('ru-RU', { maximumFractionDigits: 2 })} млн ₽`;
-
-type CurrencyCode = 'RUB' | 'USD' | 'EUR';
-
-interface CurrencyRates {
-  USD: number;
-  EUR: number;
-  updatedAt?: string;
-}
-
-const DEFAULT_RATES: CurrencyRates = { USD: 90, EUR: 98 };
-
-const formatCurrency = (value: number, currency: CurrencyCode, rates: CurrencyRates) => {
-  if (currency === 'RUB') return formatRub(value);
-  const rate = rates[currency] || DEFAULT_RATES[currency];
-  const converted = rate > 0 ? value / rate : 0;
-  return `${converted.toLocaleString('ru-RU', { maximumFractionDigits: 0 })} ${currency === 'USD' ? '$' : '€'}`;
-};
-
-const useCurrencyRates = () => {
-  const [currency, setCurrency] = useState<CurrencyCode>(() => (localStorage.getItem('x7_currency') as CurrencyCode) || 'RUB');
-  const [rates, setRates] = useState<CurrencyRates>(() => {
-    const saved = localStorage.getItem('x7_currency_rates');
-    if (!saved) return DEFAULT_RATES;
-    try {
-      return { ...DEFAULT_RATES, ...JSON.parse(saved) };
-    } catch (e) {
-      return DEFAULT_RATES;
-    }
-  });
-
-  useEffect(() => {
-    localStorage.setItem('x7_currency', currency);
-  }, [currency]);
-
-  useEffect(() => {
-    const today = new Date().toISOString().slice(0, 10);
-    if (rates.updatedAt === today) return;
-
-    fetch('https://www.cbr-xml-daily.ru/daily_json.js')
-      .then(response => response.json())
-      .then(data => {
-        const nextRates = {
-          USD: Number(data?.Valute?.USD?.Value) || DEFAULT_RATES.USD,
-          EUR: Number(data?.Valute?.EUR?.Value) || DEFAULT_RATES.EUR,
-          updatedAt: today,
-        };
-        setRates(nextRates);
-        localStorage.setItem('x7_currency_rates', JSON.stringify(nextRates));
-      })
-      .catch(() => {
-        localStorage.setItem('x7_currency_rates', JSON.stringify(rates));
-      });
-  }, [rates]);
-
-  return { currency, setCurrency, rates };
-};
-
-type ForecastMode = 'year-end' | 'deal-end' | 'custom';
-
-interface ForecastConfig {
-  mode: ForecastMode;
-  customDate: string;
-}
-
-const formatSignedRub = (value: number) => `${value >= 0 ? '+' : '-'}${formatRub(Math.abs(value))}`;
-
-const getInvestedDeals = (deals: Deal[]) => deals.filter(deal => getDealCapital(deal) > 0);
-
-const getToday = () => {
-  const now = new Date();
-  now.setHours(0, 0, 0, 0);
-  return now;
-};
-
-const getDefaultForecastDate = () => {
-  const today = getToday();
-  const defaultDate = new Date(today);
-  defaultDate.setMonth(defaultDate.getMonth() + 3);
-  return defaultDate.toISOString().slice(0, 10);
-};
-
-const getForecastTargetDate = (config: ForecastConfig, deal?: Deal) => {
-  const today = getToday();
-  if (config.mode === 'deal-end' && deal?.termDate) {
-    const dealEndDate = new Date(deal.termDate);
-    if (!Number.isNaN(dealEndDate.getTime())) return dealEndDate;
-  }
-
-  let targetDate: Date;
-  if (config.mode === 'custom' && config.customDate) {
-    const customDate = new Date(config.customDate);
-    targetDate = Number.isNaN(customDate.getTime()) ? new Date(today.getFullYear(), 11, 31) : customDate;
-  } else {
-    targetDate = new Date(today.getFullYear(), 11, 31);
-  }
-
-  if (deal?.termDate) {
-    const dealEndDate = new Date(deal.termDate);
-    if (!Number.isNaN(dealEndDate.getTime()) && dealEndDate < targetDate) return dealEndDate;
-  }
-
-  return targetDate;
-};
-
-const getForecastDays = (config: ForecastConfig, deal?: Deal) => {
-  const today = getToday();
-  const targetDate = getForecastTargetDate(config, deal);
-  targetDate.setHours(0, 0, 0, 0);
-  return Math.max(0, Math.ceil((targetDate.getTime() - today.getTime()) / 86400000));
-};
-
-const getAnnualProjectedIncome = (deal: Deal) => {
-  return getNetAnnualFlow(deal);
-};
-
-const getProjectedIncome = (deal: Deal, config: ForecastConfig) => {
-  const annualProjectedIncome = getAnnualProjectedIncome(deal);
-  return annualProjectedIncome * (getForecastDays(config, deal) / 365);
-};
-
-const getForecastLabel = (config: ForecastConfig) => {
-  if (config.mode === 'year-end') return 'до конца года';
-  if (config.mode === 'deal-end') return 'до конца сделок';
-  return 'на выбранную дату';
-};
-
-const ForecastControls = ({ config, onChange }: { config: ForecastConfig; onChange: (config: ForecastConfig) => void }) => (
-  <div className="relative z-10 mt-4 flex flex-col gap-2">
-    <p className="text-[9px] uppercase tracking-widest text-slate-400 font-black">Период прогноза</p>
-    <div className="grid grid-cols-2 gap-2">
-      {[
-        { id: 'year-end', label: 'До конца года' },
-        { id: 'deal-end', label: 'До конца сделок' },
-        { id: 'custom', label: 'На дату' },
-      ].map(item => (
-        <button
-          key={item.id}
-          onClick={() => onChange({ ...config, mode: item.id as ForecastMode })}
-        className={`w-full min-w-0 px-3 py-2 rounded-xl text-[9px] font-black uppercase tracking-widest border transition-colors whitespace-nowrap cursor-pointer ${config.mode === item.id ? 'bg-emerald-500 text-white border-emerald-500' : 'bg-surface-2 text-slate-400 border-line hover:bg-surface-2/80 hover:text-slate-100'}`}
-        >
-          {item.label}
-        </button>
-      ))}
-      <input
-        type="date"
-        value={config.customDate}
-        onChange={e => onChange({ mode: 'custom', customDate: e.target.value })}
-        className="w-full min-w-0 bg-surface-2 border border-line rounded-xl px-3 py-2 text-[10px] font-bold text-slate-100 focus:outline-none focus:ring-2 focus:ring-emerald-500/30 transition-colors font-mono"
-      />
-    </div>
-  </div>
-);
-
-const PortfolioPage = () => {
+export const PortfolioPage = () => {
   const [forecastConfig, setForecastConfig] = useState<ForecastConfig>({
     mode: 'year-end',
     customDate: getDefaultForecastDate(),
@@ -507,6 +165,7 @@ const SummaryCard = ({ forecastConfig, setForecastConfig, currencyState }: {
   const { deals } = useDeals();
   const portfolioDeals = getInvestedDeals(deals);
   const totalInvested = portfolioDeals.reduce((sum, deal) => sum + getDealCapital(deal), 0);
+  const navigate = useNavigate();
   const projectedIncome = portfolioDeals.reduce(
     (sum, deal) => sum + getProjectedIncome(deal, forecastConfig),
     0,
@@ -617,7 +276,7 @@ const AssetAllocation = () => {
           <div className="flex-1 flex items-center justify-center text-xs text-slate-500 font-medium py-10">Нет активов в портфеле.</div>
         )}
       </div>
-      <button className="w-full mt-4 py-2.5 rounded-xl bg-surface-2 border border-line text-[10px] font-black uppercase tracking-widest text-slate-400 hover:bg-surface-2/80 hover:text-slate-100 transition-all flex items-center justify-center cursor-pointer">
+      <button onClick={() => navigate('/analytics')} className="w-full mt-4 py-2.5 rounded-xl bg-surface-2 border border-line text-[10px] font-black uppercase tracking-widest text-slate-400 hover:bg-surface-2/80 hover:text-slate-100 transition-all flex items-center justify-center cursor-pointer">
         Подробнее
       </button>
     </section>
@@ -895,7 +554,7 @@ const ProjectsCards = ({ forecastConfig, onSelectProject, currencyState }: {
                         <span className="text-xs font-bold text-slate-300">{progress}%</span>
                       </div>
                       
-                      <button className="w-full mt-4 py-2 rounded-xl bg-surface-2 border border-line text-[10px] font-black uppercase tracking-widest text-slate-400 group-hover:bg-[#10b981] group-hover:text-white group-hover:border-[#10b981] transition-all cursor-pointer">
+                      <button onClick={(e) => { e.stopPropagation(); onSelectProject(project.id); }} className="w-full mt-4 py-2 rounded-xl bg-surface-2 border border-line text-[10px] font-black uppercase tracking-widest text-slate-400 group-hover:bg-[#10b981] group-hover:text-white group-hover:border-[#10b981] transition-all cursor-pointer">
                         Подробнее
                       </button>
                     </div>
@@ -973,7 +632,8 @@ const buildProjectHistory = (deal: Deal) => {
 // Лента событий синдиката — собрана из реального statusHistory всех сделок
 const SyndicateEvents = () => {
   const { deals } = useDeals();
-  const dbEvents = deals
+  const [showAll, setShowAll] = useState(false);
+  const allEvents = deals
     .flatMap(deal => (deal.statusHistory || []).map(item => ({
       id: item.id || `${deal.id}-${item.date}`,
       dealName: deal.name,
@@ -981,8 +641,8 @@ const SyndicateEvents = () => {
       date: item.date,
       comment: item.comment,
     })))
-    .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
-    .slice(0, 8);
+    .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+  const dbEvents = showAll ? allEvents : allEvents.slice(0, 8);
 
   const formatEventDate = (iso: string) => {
     const d = new Date(iso);
@@ -998,9 +658,7 @@ const SyndicateEvents = () => {
           <h3 className="font-bold text-sm text-slate-100 flex items-center gap-2">
             <Activity size={16} className="text-slate-500" /> События синдиката
           </h3>
-          <button className="text-xs font-bold text-slate-400 hover:text-white transition-all bg-surface-2 border border-line px-3 py-1.5 rounded-xl">
-            Все события
-          </button>
+          <span className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">{allEvents.length}</span>
         </div>
 
         <div className="space-y-4">
@@ -1029,9 +687,11 @@ const SyndicateEvents = () => {
         </div>
       </div>
 
-      <button className="w-full mt-5 py-2.5 rounded-xl bg-surface-2 border border-line text-[10px] font-black uppercase tracking-widest text-slate-400 hover:bg-surface-2/80 hover:text-slate-100 transition-all flex items-center justify-center cursor-pointer">
-        Все события
+      {allEvents.length > 8 && (
+        <button onClick={() => setShowAll(prev => !prev)} className="w-full mt-5 py-2.5 rounded-xl bg-surface-2 border border-line text-[10px] font-black uppercase tracking-widest text-slate-400 hover:bg-surface-2/80 hover:text-slate-100 transition-all flex items-center justify-center cursor-pointer">
+        {showAll ? 'Свернуть' : 'Все события'}
       </button>
+      )}
     </section>
   );
 };
@@ -1185,7 +845,7 @@ const ProjectDetailPage = ({ deal, forecastConfig, setForecastConfig, onBack }: 
 
 // --- Аналитика (из реальных сделок портфеля) ---
 
-const AnalyticsPage = () => {
+export const AnalyticsPage = () => {
   const { deals } = useDeals();
   const portfolioDeals = getInvestedDeals(deals);
   const totalInvested = portfolioDeals.reduce((sum, deal) => sum + getDealCapital(deal), 0);
@@ -1310,7 +970,7 @@ const PAYOUT_KIND_LABEL: Record<string, string> = {
   other: 'Прочее',
 };
 
-const PaymentsPage = () => {
+export const PaymentsPage = () => {
   const { deals, payouts } = useDeals();
   const dealName = (id: string) => deals.find(d => d.id === id)?.name || '—';
   // Реальные выплаты из коллекции payouts, новые сверху.
@@ -1366,35 +1026,3 @@ const PaymentsPage = () => {
   );
 };
 
-// --- Main App ---
-
-export default function Portal() {
-  const [activeTab, setActiveTab] = useState('portfolio');
-  const { deals, loading, error, reload } = useDeals();
-
-  return (
-    <div className="h-screen w-full bg-base text-slate-100 font-sans flex overflow-hidden selection:bg-emerald-500 selection:text-white">
-      <Sidebar activeTab={activeTab} setActiveTab={setActiveTab} />
-
-      <div className="flex-1 min-w-0 flex flex-col overflow-hidden">
-        <MobileBar activeTab={activeTab} setActiveTab={setActiveTab} />
-        <main className="flex-1 overflow-y-auto p-4 lg:p-6">
-          <div className="max-w-[1600px] mx-auto w-full">
-            {error ? (
-              <ErrorState message={error} onRetry={reload} />
-            ) : loading && deals.length === 0 ? (
-              <LoadingState label="Загрузка портфеля…" />
-            ) : (
-              <>
-                {activeTab === 'portfolio' && <PortfolioPage />}
-                {activeTab === 'new-projects' && <NewProjectsPage />}
-                {activeTab === 'analytics' && <AnalyticsPage />}
-                {activeTab === 'payments' && <PaymentsPage />}
-              </>
-            )}
-          </div>
-        </main>
-      </div>
-    </div>
-  );
-}

@@ -1,9 +1,9 @@
 import React from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
-import Portal from './pages/Portal';
+import AppLayout from './components/AppLayout';
+import { PortfolioPage, AnalyticsPage, PaymentsPage } from './pages/Portal';
 import Login from './pages/Login';
 import ResetPassword from './pages/ResetPassword';
-import AdminLayout from './pages/admin/AdminLayout';
 import AdminDeals from './pages/admin/AdminDeals';
 import CreateDeal from './pages/admin/CreateDeal';
 import ProjectView from './pages/admin/ProjectView';
@@ -24,22 +24,24 @@ export default function App() {
             {/* Задание нового пароля по ссылке из письма */}
             <Route path="/reset-password/:token" element={<ResetPassword />} />
 
-            {/* Требуется авторизация (одна сущность — все права у любого вошедшего) */}
+            {/* Требуется авторизация (одна сущность — все права у любого вошедшего).
+                Единый layout: разделы портала и работа со сделками — в одном дереве
+                под общим сквозным меню. */}
             <Route element={<RoleGuard />}>
-              <Route path="/" element={<Portal />} />
+              <Route element={<AppLayout />}>
+                <Route path="/" element={<PortfolioPage />} />
+                <Route path="/analytics" element={<AnalyticsPage />} />
+                <Route path="/payments" element={<PaymentsPage />} />
 
-              {/* Создание сделок — доступно любому авторизованному */}
-              <Route path="/deals" element={<AdminLayout />}>
-                <Route index element={<AdminDeals />} />
-                <Route path="create" element={<CreateDeal />} />
-                <Route path=":id" element={<ProjectView />} />
-                <Route path=":id/edit" element={<CreateDeal />} />
-              </Route>
+                {/* Работа со сделками */}
+                <Route path="/deals" element={<AdminDeals />} />
+                <Route path="/deals/create" element={<CreateDeal />} />
+                <Route path="/deals/:id" element={<ProjectView />} />
+                <Route path="/deals/:id/edit" element={<CreateDeal />} />
 
-              {/* Legacy admin route kept for existing links */}
-              <Route path="/admin" element={<AdminLayout />}>
-                <Route index element={<Navigate to="/deals" replace />} />
-                <Route path="deals" element={<AdminDeals />} />
+                {/* Legacy */}
+                <Route path="/admin" element={<Navigate to="/deals" replace />} />
+                <Route path="/admin/deals" element={<Navigate to="/deals" replace />} />
               </Route>
             </Route>
 
