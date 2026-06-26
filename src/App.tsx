@@ -2,6 +2,7 @@ import React from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import Portal from './pages/Portal';
 import Login from './pages/Login';
+import ResetPassword from './pages/ResetPassword';
 import AdminLayout from './pages/admin/AdminLayout';
 import AdminDeals from './pages/admin/AdminDeals';
 import CreateDeal from './pages/admin/CreateDeal';
@@ -18,6 +19,8 @@ export default function App() {
           <Routes>
             {/* Публичный вход */}
             <Route path="/login" element={<Login />} />
+            {/* Задание нового пароля по ссылке из письма */}
+            <Route path="/reset-password/:token" element={<ResetPassword />} />
 
             {/* Требуется авторизация (одна сущность — все права у любого вошедшего) */}
             <Route element={<RoleGuard />}>

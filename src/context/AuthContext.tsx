@@ -24,8 +24,10 @@ interface AuthContextType {
   signUp: (email: string, password: string, fullName?: string) => Promise<string>;
   // Подтверждение кода из письма — завершает вход.
   confirmOtp: (otpId: string, code: string) => Promise<void>;
-  // Запрос письма со ссылкой для сброса пароля (подтверждение — на встроенной странице PB).
+  // Запрос письма со ссылкой для сброса пароля.
   requestPasswordReset: (email: string) => Promise<void>;
+  // Завершение сброса пароля: токен из письма + новый пароль.
+  confirmPasswordReset: (token: string, password: string, passwordConfirm: string) => Promise<void>;
   signOut: () => void;
 }
 
@@ -85,11 +87,18 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     await pb.collection('users').authWithOTP(otpId, code.trim());
   }, []);
 
-  // Сброс пароля: PocketBase шлёт письмо со ссылкой на встроенную страницу
-  // подтверждения (/_/#/auth/confirm-password-reset/{TOKEN}), где задаётся новый пароль.
+  // Сброс пароля: PocketBase шлёт письмо со ссылкой на нашу страницу /reset-password/{TOKEN}.
   const requestPasswordReset = useCallback(async (email: string) => {
     await pb.collection('users').requestPasswordReset(email.trim());
   }, []);
+
+  // Завершение сброса: токен из письма + новый пароль (инвалидирует прежние сессии).
+  const confirmPasswordReset = useCallback(
+    async (token: string, password: string, passwordConfirm: string) => {
+      await pb.collection('users').confirmPasswordReset(token, password, passwordConfirm);
+    },
+    [],
+  );
 
   const signOut = useCallback(() => {
     pb.authStore.clear();
@@ -99,7 +108,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   return (
     <AuthContext.Provider
-      value={{ user, role, isAuthenticated: !!user, loading, signIn, signUp, confirmOtp, requestPasswordReset, signOut }}
+      value={{ user, role, isAuthenticated: !!user, loading, signIn, signUp, confirmOtp, requestPasswordReset, confirmPasswordReset, signOut }}
     >
       {children}
     </AuthContext.Provider>
