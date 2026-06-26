@@ -10,12 +10,14 @@ import ProjectView from './pages/admin/ProjectView';
 import RoleGuard from './components/RoleGuard';
 import { AuthProvider } from './context/AuthContext';
 import { DealProvider } from './context/DealContext';
+import { ThemeProvider } from './context/ThemeContext';
 
 export default function App() {
   return (
     <AuthProvider>
-      <DealProvider>
-        <Router>
+      <ThemeProvider>
+        <DealProvider>
+          <Router>
           <Routes>
             {/* Публичный вход */}
             <Route path="/login" element={<Login />} />
@@ -45,6 +47,7 @@ export default function App() {
           </Routes>
         </Router>
       </DealProvider>
+      </ThemeProvider>
     </AuthProvider>
   );
 }

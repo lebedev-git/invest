@@ -2,6 +2,7 @@ import React from 'react';
 import { Outlet, NavLink } from 'react-router-dom';
 import { LogOut, Home } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
+import { ThemeToggle } from '../Portal';
 
 export default function AdminLayout() {
   const { user, signOut } = useAuth();
@@ -26,10 +27,12 @@ export default function AdminLayout() {
             </div>
           </div>
           <div className="w-px h-6 bg-line hidden sm:block"></div>
+          <ThemeToggle compact />
+          <div className="w-px h-6 bg-line hidden sm:block"></div>
           <NavLink to="/" className="flex items-center gap-2 text-[10px] font-bold text-slate-400 hover:text-slate-100 uppercase tracking-widest transition-all">
             <Home size={14} /> На портал
           </NavLink>
-          <button onClick={signOut} className="flex items-center gap-2 text-[10px] font-bold text-slate-400 hover:text-rose-400 uppercase tracking-widest transition-all">
+          <button onClick={signOut} className="flex items-center gap-2 text-[10px] font-bold text-slate-400 hover:text-rose-400 uppercase tracking-widest transition-all cursor-pointer">
             <LogOut size={14} /> Выйти
           </button>
         </div>

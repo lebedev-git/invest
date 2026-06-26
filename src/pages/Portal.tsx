@@ -28,13 +28,34 @@ import {
   BarChart2,
   FileText,
   ArrowRight,
+  Sun,
+  Moon,
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { Link } from 'react-router-dom';
 import { useDeals, Deal } from '../context/DealContext';
 import { useAuth } from '../context/AuthContext';
+import { useTheme } from '../context/ThemeContext';
 import { statusColor, cleanLabel, getStageProgress } from '../utils/dealDisplay';
 import { LoadingState, ErrorState } from '../components/AsyncState';
+
+// Переключатель тем оформления (Солнце / Луна)
+export const ThemeToggle = ({ compact }: { compact?: boolean }) => {
+  const { theme, toggleTheme } = useTheme();
+  return (
+    <button
+      onClick={toggleTheme}
+      type="button"
+      title={theme === 'light' ? 'Включить темную тему' : 'Включить светлую тему'}
+      className={`flex items-center justify-center rounded-xl border border-line bg-surface-2 text-slate-400 hover:text-slate-100 hover:border-emerald-500/30 transition-all cursor-pointer ${
+        compact ? 'w-8 h-8 p-0' : 'px-3 py-2'
+      }`}
+    >
+      {theme === 'light' ? <Moon size={compact ? 14 : 16} /> : <Sun size={compact ? 14 : 16} />}
+      {!compact && <span className="text-[10px] font-black uppercase tracking-widest ml-2 hidden sm:inline">Стиль</span>}
+    </button>
+  );
+};
 import {
   parseMoney,
   parsePercent,
@@ -135,7 +156,7 @@ const NavItems = ({ activeTab, setActiveTab, compact }: {
           onClick={() => setActiveTab(item.id)}
           className={`relative flex items-center gap-3 rounded-xl font-bold transition-all ${compact ? 'px-3 py-2 text-xs' : 'px-4 py-3.5 text-[13px]'} ${active
             ? 'bg-[#10b981]/15 text-[#10b981]'
-            : 'text-slate-400 hover:text-slate-100 hover:bg-white/5'}`}
+            : 'text-slate-400 hover:text-slate-100 hover:bg-surface-2'}`}
         >
           <Icon size={compact ? 16 : 18} />
           {item.label}
@@ -151,17 +172,20 @@ const roleLabel = (role?: string | null) =>
 const Sidebar = ({ activeTab, setActiveTab }: { activeTab: string; setActiveTab: (tab: string) => void }) => {
   const { user, role, signOut } = useAuth();
   return (
-    <aside className="hidden lg:flex flex-col w-64 shrink-0 bg-[#0b121f] border-r border-line p-5">
-      <div className="flex items-center gap-3 px-2 mb-8 mt-2">
-        <X7Logo />
-        <span className="text-xl font-bold tracking-tight text-slate-100 uppercase">Портфель</span>
+    <aside className="hidden lg:flex flex-col w-64 shrink-0 bg-surface border-r border-line p-5">
+      <div className="flex items-center justify-between gap-3 px-2 mb-8 mt-2">
+        <div className="flex items-center gap-3">
+          <X7Logo />
+          <span className="text-xl font-bold tracking-tight text-slate-100 uppercase">Портфель</span>
+        </div>
+        <ThemeToggle compact />
       </div>
 
       <nav className="flex flex-col gap-1.5">
         <NavItems activeTab={activeTab} setActiveTab={setActiveTab} />
         <Link
           to="/deals"
-          className="flex items-center gap-3 px-4 py-3.5 rounded-xl text-[13px] font-bold text-slate-400 hover:text-slate-100 hover:bg-white/5 transition-all"
+          className="flex items-center gap-3 px-4 py-3.5 rounded-xl text-[13px] font-bold text-slate-400 hover:text-slate-100 hover:bg-surface-2 transition-all"
         >
           <Plus size={18} /> Создание сделок
         </Link>
@@ -195,13 +219,16 @@ const MobileBar = ({ activeTab, setActiveTab }: { activeTab: string; setActiveTa
       <X7Logo />
       <nav className="flex items-center gap-1">
         <NavItems activeTab={activeTab} setActiveTab={setActiveTab} compact />
-        <Link to="/deals" className="flex items-center gap-2 px-3 py-2 rounded-xl text-xs font-semibold text-slate-400 hover:text-slate-100 hover:bg-white/5 whitespace-nowrap">
+        <Link to="/deals" className="flex items-center gap-2 px-3 py-2 rounded-xl text-xs font-semibold text-slate-400 hover:text-slate-100 hover:bg-surface-2 whitespace-nowrap">
           <Plus size={16} /> Сделки
         </Link>
       </nav>
-      <button onClick={signOut} title="Выйти" className="ml-auto text-slate-500 hover:text-rose-400 transition-colors shrink-0">
-        <LogOut size={16} />
-      </button>
+      <div className="ml-auto flex items-center gap-3">
+        <ThemeToggle compact />
+        <button onClick={signOut} title="Выйти" className="text-slate-500 hover:text-rose-400 transition-colors shrink-0 cursor-pointer">
+          <LogOut size={16} />
+        </button>
+      </div>
     </header>
   );
 };
@@ -227,7 +254,7 @@ const NewProjectsPage = () => {
             <div className={`absolute top-0 right-0 w-24 h-24 blur-3xl opacity-25 transition-opacity group-hover:opacity-50 ${idx % 3 === 0 ? 'bg-violet-500' : idx % 3 === 1 ? 'bg-blue-500' : 'bg-emerald-500'}`}></div>
 
             <div className="flex justify-between items-start z-10">
-              <span className="px-3 py-1 bg-white/5 rounded-lg text-[10px] font-black uppercase text-slate-400 tracking-widest">{cleanLabel(lot.type)}</span>
+              <span className="px-3 py-1 bg-surface-2 rounded-lg text-[10px] font-black uppercase text-slate-400 tracking-widest">{cleanLabel(lot.type)}</span>
               <span className="text-emerald-400 font-black text-lg">
                 {getPaybackYears(lot) ? `${getPaybackYears(lot).toFixed(1)} г.` : `${lot.targetIrr || 0}%`}
                 <span className="text-xs opacity-60"> {getPaybackYears(lot) ? 'окуп.' : 'доходн.'}</span>
@@ -396,7 +423,7 @@ const getForecastLabel = (config: ForecastConfig) => {
 
 const ForecastControls = ({ config, onChange }: { config: ForecastConfig; onChange: (config: ForecastConfig) => void }) => (
   <div className="relative z-10 mt-4 flex flex-col gap-2">
-    <p className="text-[9px] uppercase tracking-widest text-white/40 font-black">Период прогноза</p>
+    <p className="text-[9px] uppercase tracking-widest text-slate-400 font-black">Период прогноза</p>
     <div className="grid grid-cols-2 gap-2">
       {[
         { id: 'year-end', label: 'До конца года' },
@@ -406,7 +433,7 @@ const ForecastControls = ({ config, onChange }: { config: ForecastConfig; onChan
         <button
           key={item.id}
           onClick={() => onChange({ ...config, mode: item.id as ForecastMode })}
-        className={`w-full min-w-0 px-3 py-2 rounded-xl text-[9px] font-black uppercase tracking-widest border transition-colors whitespace-nowrap ${config.mode === item.id ? 'bg-white text-slate-900 border-white' : 'bg-white/5 text-white/60 border-white/10 hover:bg-white/10 hover:text-white'}`}
+        className={`w-full min-w-0 px-3 py-2 rounded-xl text-[9px] font-black uppercase tracking-widest border transition-colors whitespace-nowrap cursor-pointer ${config.mode === item.id ? 'bg-slate-100 text-slate-950 border-slate-100' : 'bg-surface-2 text-slate-400 border-line hover:bg-surface-2/80 hover:text-slate-100'}`}
         >
           {item.label}
         </button>
@@ -415,7 +442,7 @@ const ForecastControls = ({ config, onChange }: { config: ForecastConfig; onChan
         type="date"
         value={config.customDate}
         onChange={e => onChange({ mode: 'custom', customDate: e.target.value })}
-        className="w-full min-w-0 bg-white/5 border border-white/10 rounded-xl px-3 py-2 text-[10px] font-bold text-white focus:outline-none focus:ring-2 focus:ring-white/10 transition-colors font-mono"
+        className="w-full min-w-0 bg-surface-2 border border-line rounded-xl px-3 py-2 text-[10px] font-bold text-slate-100 focus:outline-none focus:ring-2 focus:ring-emerald-500/30 transition-colors font-mono"
       />
     </div>
   </div>
@@ -494,7 +521,7 @@ const SummaryCard = ({ forecastConfig, setForecastConfig, currencyState }: {
               <button
                 key={item}
                 onClick={() => setCurrency(item)}
-                className={`px-3 py-1 rounded-full text-[9px] font-black uppercase tracking-wider transition-colors ${currency === item ? 'bg-white text-slate-950 font-bold' : 'text-slate-400 hover:text-white'}`}
+                className={`px-3 py-1 rounded-full text-[9px] font-black uppercase tracking-wider transition-colors cursor-pointer ${currency === item ? 'bg-slate-100 text-slate-950 font-bold' : 'text-slate-400 hover:text-slate-100'}`}
               >
                 {item}
               </button>
@@ -579,7 +606,7 @@ const AssetAllocation = () => {
           <div className="flex-1 flex items-center justify-center text-xs text-slate-500 font-medium py-10">Нет активов в портфеле.</div>
         )}
       </div>
-      <button className="w-full mt-4 py-2.5 rounded-xl bg-white/5 border border-line text-[10px] font-black uppercase tracking-widest text-slate-300 hover:bg-white/10 hover:text-white transition-all flex items-center justify-center">
+      <button className="w-full mt-4 py-2.5 rounded-xl bg-surface-2 border border-line text-[10px] font-black uppercase tracking-widest text-slate-400 hover:bg-surface-2/80 hover:text-slate-100 transition-all flex items-center justify-center cursor-pointer">
         Подробнее
       </button>
     </section>
@@ -701,7 +728,7 @@ const PaymentsCalendar = () => {
         </div>
       </div>
 
-      <button onClick={() => setExpanded(prev => !prev)} className="w-full mt-4 py-2.5 rounded-xl bg-white/5 border border-line text-[10px] font-black uppercase tracking-widest text-slate-300 hover:bg-white/10 hover:text-white transition-all flex items-center justify-center">
+      <button onClick={() => setExpanded(prev => !prev)} className="w-full mt-4 py-2.5 rounded-xl bg-surface-2 border border-line text-[10px] font-black uppercase tracking-widest text-slate-400 hover:bg-surface-2/80 hover:text-slate-100 transition-all flex items-center justify-center cursor-pointer">
         Все выплаты
       </button>
 
@@ -857,7 +884,7 @@ const ProjectsCards = ({ forecastConfig, onSelectProject, currencyState }: {
                         <span className="text-xs font-bold text-slate-300">{progress}%</span>
                       </div>
                       
-                      <button className="w-full mt-4 py-2 rounded-xl bg-white/5 border border-line text-[10px] font-black uppercase tracking-widest text-slate-300 group-hover:bg-[#10b981] group-hover:text-white group-hover:border-[#10b981] transition-all">
+                      <button className="w-full mt-4 py-2 rounded-xl bg-surface-2 border border-line text-[10px] font-black uppercase tracking-widest text-slate-400 group-hover:bg-[#10b981] group-hover:text-white group-hover:border-[#10b981] transition-all cursor-pointer">
                         Подробнее
                       </button>
                     </div>
@@ -977,7 +1004,7 @@ const SyndicateEvents = () => {
         </div>
       </div>
 
-      <button className="w-full mt-5 py-2.5 rounded-xl bg-white/5 border border-line text-[10px] font-black uppercase tracking-widest text-slate-300 hover:bg-white/10 hover:text-white transition-all flex items-center justify-center">
+      <button className="w-full mt-5 py-2.5 rounded-xl bg-surface-2 border border-line text-[10px] font-black uppercase tracking-widest text-slate-400 hover:bg-surface-2/80 hover:text-slate-100 transition-all flex items-center justify-center cursor-pointer">
         Все события
       </button>
     </section>
@@ -1294,7 +1321,7 @@ const PaymentsPage = () => {
               </thead>
               <tbody className="divide-y divide-line text-sm">
                 {rows.map(row => (
-                  <tr key={row.id} className="hover:bg-white/5 transition-colors">
+                  <tr key={row.id} className="hover:bg-surface-2 transition-colors">
                     <td className="p-4 pl-6 font-mono text-slate-400">{new Date(row.date).toLocaleDateString('ru-RU')}</td>
                     <td className="p-4 font-bold text-slate-200">{dealName(row.deal)}</td>
                     <td className="p-4 text-slate-400">{PAYOUT_KIND_LABEL[row.kind] || 'Прочее'}{row.comment ? ` · ${row.comment}` : ''}</td>

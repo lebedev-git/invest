@@ -1,31 +1,100 @@
 @import "tailwindcss";
 
-/* --- Тёмная тема X7 Invest Portal --- */
+:root {
+  /* По умолчанию — Светлая (белая) тема X7 Invest Portal */
+  --base-bg: #f8fafc;        /* Светлый фон страницы */
+  --surface-bg: #ffffff;     /* Белые карточки и сайдбар */
+  --surface-2-bg: #f1f5f9;   /* Серые инпуты/вложенные элементы */
+  --line-color: #e2e8f0;     /* Светлые границы */
+
+  /* Инвертированные цвета текста для светлой темы */
+  --text-50: #0f172a;        /* headings: dark slate (slate-900) */
+  --text-100: #0f172a;       /* primary text: dark slate (slate-900) */
+  --text-200: #1e293b;       /* secondary text: slate-800 */
+  --text-300: #334155;       /* slate-700 */
+  --text-400: #64748b;       /* muted text: slate-500 */
+  --text-500: #94a3b8;       /* very muted text: slate-400 */
+  --text-600: #475569;
+  --text-700: #334155;
+  --text-800: #1e293b;
+  
+  /* Эти цвета остаются темными в обеих темах, так как они поверх белых плашек */
+  --text-900: #0f172a;
+  --text-950: #020617;
+  
+  --shadow-color: rgba(0, 0, 0, 0.04);
+  --shadow-color-hover: rgba(16, 185, 129, 0.1);
+  
+  --calendar-invert: 0;
+}
+
+.dark {
+  /* Тёмная тема X7 Invest Portal */
+  --base-bg: #060b13;        /* фон приложения */
+  --surface-bg: #0b121f;     /* карточки / основные поверхности */
+  --surface-2-bg: #121a2c;   /* вложенные поверхности, инпуты */
+  --line-color: #15223c;     /* границы на тёмном фоне */
+
+  /* Стандартные цвета текста для темной темы */
+  --text-50: #f8fafc;
+  --text-100: #f1f5f9;
+  --text-200: #e2e8f0;
+  --text-300: #cbd5e1;
+  --text-400: #94a3b8;
+  --text-500: #64748b;
+  --text-600: #475569;
+  --text-700: #334155;
+  --text-800: #1e293b;
+  
+  --text-900: #0f172a;
+  --text-950: #020617;
+
+  --shadow-color: rgba(0, 0, 0, 0.3);
+  --shadow-color-hover: rgba(16, 185, 129, 0.2);
+  
+  --calendar-invert: 0.7;
+}
+
 @theme {
-  --color-base: #060b13;        /* фон приложения */
-  --color-surface: #0b121f;     /* карточки / основные поверхности */
-  --color-surface-2: #121a2c;   /* вложенные поверхности, инпуты */
-  --color-line: #15223c;        /* границы на тёмном фоне */
+  --color-base: var(--base-bg);
+  --color-surface: var(--surface-bg);
+  --color-surface-2: var(--surface-2-bg);
+  --color-line: var(--line-color);
+
+  --color-slate-50: var(--text-50);
+  --color-slate-100: var(--text-100);
+  --color-slate-200: var(--text-200);
+  --color-slate-300: var(--text-300);
+  --color-slate-400: var(--text-400);
+  --color-slate-500: var(--text-500);
+  --color-slate-600: var(--text-600);
+  --color-slate-700: var(--text-700);
+  --color-slate-800: var(--text-800);
+  --color-slate-900: var(--text-900);
+  --color-slate-950: var(--text-950);
 }
 
 @layer base {
   body {
     background-color: var(--color-base);
+    color: var(--color-slate-100);
+    transition: background-color 0.2s ease, color 0.2s ease, border-color 0.2s ease;
   }
 }
 
 @layer components {
-  /* Базовая тёмная карточка */
+  /* Базовая карточка */
   .card {
-    @apply bg-surface border border-line rounded-3xl shadow-lg shadow-black/20;
+    @apply bg-surface border border-line rounded-3xl transition-all duration-200;
+    box-shadow: 0 10px 30px -10px var(--shadow-color), 0 1px 3px var(--shadow-color);
   }
-  /* Поле ввода на тёмном фоне */
+  /* Поле ввода */
   .field {
-    @apply bg-surface-2 border border-line rounded-xl px-4 py-3 text-sm font-semibold text-slate-100 placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-emerald-500/30 transition-all;
+    @apply bg-surface-2 border border-line rounded-xl px-4 py-3 text-sm font-semibold text-slate-100 placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-emerald-500/30 transition-all duration-200;
   }
 }
 
-/* Тёмные слоты для нативных контролов (date / select) */
+/* Слоты для нативных контролов (date / select) */
 input[type="date"]::-webkit-calendar-picker-indicator {
-  filter: invert(0.7);
+  filter: invert(var(--calendar-invert));
 }

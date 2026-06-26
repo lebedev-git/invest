@@ -17,3 +17,4 @@ coverage/
 /pb/pb_data/
 /pb/CHANGELOG.md
 /pb/LICENSE.md
+.aider*

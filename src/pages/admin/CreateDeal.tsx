@@ -1653,7 +1653,7 @@ export default function CreateDeal() {
                 </div>
                 <div className="flex justify-between items-center border-b border-line pb-2">
                   <span className="text-[10px] font-black uppercase tracking-widest text-slate-400">Срок окупаемости</span>
-                  <span className="text-xs font-bold text-slate-950">
+                  <span className="text-xs font-bold text-slate-100">
                     {typeof metrics.paybackYears === 'number' ? `${metrics.paybackYears.toFixed(1)} лет` : '—'}
                   </span>
                 </div>
