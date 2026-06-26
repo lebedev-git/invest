@@ -82,17 +82,6 @@ export default function AppLayout() {
         </nav>
 
         <div className="mt-auto flex flex-col gap-3 pt-6">
-          {!collapsed && (
-            <div className="flex items-center gap-3 px-3 py-3 rounded-xl bg-surface-2 border border-line">
-              <div className="w-9 h-9 rounded-lg bg-[#10b981]/15 text-[#10b981] flex items-center justify-center shrink-0">
-                <Building2 size={18} />
-              </div>
-              <div className="min-w-0 flex-1">
-                <p className="text-xs font-bold text-slate-100 truncate">{user?.full_name || user?.email || 'Аккаунт'}</p>
-                <p className="text-[10px] text-slate-500 font-medium truncate">{roleLabel(role)}</p>
-              </div>
-            </div>
-          )}
           <div className={`flex gap-2 ${collapsed ? 'flex-col items-center' : 'items-center'}`}>
             <ThemeToggle compact />
             <button

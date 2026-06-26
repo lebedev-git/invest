@@ -117,6 +117,161 @@ const getProgressBarColor = (progress: number) => {
   return 'bg-[#f97316]';
 };
 
+const formatRub = (value: number) => `${Math.round(value).toLocaleString('ru-RU')} ₽`;
+const formatMln = (value: number) => `${(value / 1e6).toLocaleString('ru-RU', { maximumFractionDigits: 2 })} млн ₽`;
+
+type CurrencyCode = 'RUB' | 'USD' | 'EUR';
+
+interface CurrencyRates {
+  USD: number;
+  EUR: number;
+  updatedAt?: string;
+}
+
+const DEFAULT_RATES: CurrencyRates = { USD: 90, EUR: 98 };
+
+const formatCurrency = (value: number, currency: CurrencyCode, rates: CurrencyRates) => {
+  if (currency === 'RUB') return formatRub(value);
+  const rate = rates[currency] || DEFAULT_RATES[currency];
+  const converted = rate > 0 ? value / rate : 0;
+  return `${converted.toLocaleString('ru-RU', { maximumFractionDigits: 0 })} ${currency === 'USD' ? '$' : '€'}`;
+};
+
+const useCurrencyRates = () => {
+  const [currency, setCurrency] = useState<CurrencyCode>(() => (localStorage.getItem('x7_currency') as CurrencyCode) || 'RUB');
+  const [rates, setRates] = useState<CurrencyRates>(() => {
+    const saved = localStorage.getItem('x7_currency_rates');
+    if (!saved) return DEFAULT_RATES;
+    try {
+      return { ...DEFAULT_RATES, ...JSON.parse(saved) };
+    } catch (e) {
+      return DEFAULT_RATES;
+    }
+  });
+
+  useEffect(() => {
+    localStorage.setItem('x7_currency', currency);
+  }, [currency]);
+
+  useEffect(() => {
+    const today = new Date().toISOString().slice(0, 10);
+    if (rates.updatedAt === today) return;
+
+    fetch('https://www.cbr-xml-daily.ru/daily_json.js')
+      .then(response => response.json())
+      .then(data => {
+        const nextRates = {
+          USD: Number(data?.Valute?.USD?.Value) || DEFAULT_RATES.USD,
+          EUR: Number(data?.Valute?.EUR?.Value) || DEFAULT_RATES.EUR,
+          updatedAt: today,
+        };
+        setRates(nextRates);
+        localStorage.setItem('x7_currency_rates', JSON.stringify(nextRates));
+      })
+      .catch(() => {
+        localStorage.setItem('x7_currency_rates', JSON.stringify(rates));
+      });
+  }, [rates]);
+
+  return { currency, setCurrency, rates };
+};
+
+type ForecastMode = 'year-end' | 'deal-end' | 'custom';
+
+interface ForecastConfig {
+  mode: ForecastMode;
+  customDate: string;
+}
+
+const formatSignedRub = (value: number) => `${value >= 0 ? '+' : '-'}${formatRub(Math.abs(value))}`;
+
+const getInvestedDeals = (deals: Deal[]) => deals.filter(deal => getDealCapital(deal) > 0);
+
+const getToday = () => {
+  const now = new Date();
+  now.setHours(0, 0, 0, 0);
+  return now;
+};
+
+const getDefaultForecastDate = () => {
+  const today = getToday();
+  const defaultDate = new Date(today);
+  defaultDate.setMonth(defaultDate.getMonth() + 3);
+  return defaultDate.toISOString().slice(0, 10);
+};
+
+const getForecastTargetDate = (config: ForecastConfig, deal?: Deal) => {
+  const today = getToday();
+  if (config.mode === 'deal-end' && deal?.termDate) {
+    const dealEndDate = new Date(deal.termDate);
+    if (!Number.isNaN(dealEndDate.getTime())) return dealEndDate;
+  }
+
+  let targetDate: Date;
+  if (config.mode === 'custom' && config.customDate) {
+    const customDate = new Date(config.customDate);
+    targetDate = Number.isNaN(customDate.getTime()) ? new Date(today.getFullYear(), 11, 31) : customDate;
+  } else {
+    targetDate = new Date(today.getFullYear(), 11, 31);
+  }
+
+  if (deal?.termDate) {
+    const dealEndDate = new Date(deal.termDate);
+    if (!Number.isNaN(dealEndDate.getTime()) && dealEndDate < targetDate) return dealEndDate;
+  }
+
+  return targetDate;
+};
+
+const getForecastDays = (config: ForecastConfig, deal?: Deal) => {
+  const today = getToday();
+  const targetDate = getForecastTargetDate(config, deal);
+  targetDate.setHours(0, 0, 0, 0);
+  return Math.max(0, Math.ceil((targetDate.getTime() - today.getTime()) / 86400000));
+};
+
+const getAnnualProjectedIncome = (deal: Deal) => {
+  return getNetAnnualFlow(deal);
+};
+
+const getProjectedIncome = (deal: Deal, config: ForecastConfig) => {
+  const annualProjectedIncome = getAnnualProjectedIncome(deal);
+  return annualProjectedIncome * (getForecastDays(config, deal) / 365);
+};
+
+const getForecastLabel = (config: ForecastConfig) => {
+  if (config.mode === 'year-end') return 'до конца года';
+  if (config.mode === 'deal-end') return 'до конца сделок';
+  return 'на выбранную дату';
+};
+
+const ForecastControls = ({ config, onChange }: { config: ForecastConfig; onChange: (config: ForecastConfig) => void }) => (
+  <div className="relative z-10 mt-4 flex flex-col gap-2">
+    <p className="text-[9px] uppercase tracking-widest text-slate-400 font-black">Период прогноза</p>
+    <div className="grid grid-cols-2 gap-2">
+      {[
+        { id: 'year-end', label: 'До конца года' },
+        { id: 'deal-end', label: 'До конца сделок' },
+        { id: 'custom', label: 'На дату' },
+      ].map(item => (
+        <button
+          key={item.id}
+          onClick={() => onChange({ ...config, mode: item.id as ForecastMode })}
+        className={`w-full min-w-0 px-3 py-2 rounded-xl text-[9px] font-black uppercase tracking-widest border transition-colors whitespace-nowrap cursor-pointer ${config.mode === item.id ? 'bg-emerald-500 text-white border-emerald-500' : 'bg-surface-2 text-slate-400 border-line hover:bg-surface-2/80 hover:text-slate-100'}`}
+        >
+          {item.label}
+        </button>
+      ))}
+      <input
+        type="date"
+        value={config.customDate}
+        onChange={e => onChange({ mode: 'custom', customDate: e.target.value })}
+        className="w-full min-w-0 bg-surface-2 border border-line rounded-xl px-3 py-2 text-[10px] font-bold text-slate-100 focus:outline-none focus:ring-2 focus:ring-emerald-500/30 transition-colors font-mono"
+      />
+    </div>
+  </div>
+);
+
 export const PortfolioPage = () => {
   const [forecastConfig, setForecastConfig] = useState<ForecastConfig>({
     mode: 'year-end',
@@ -165,7 +320,6 @@ const SummaryCard = ({ forecastConfig, setForecastConfig, currencyState }: {
   const { deals } = useDeals();
   const portfolioDeals = getInvestedDeals(deals);
   const totalInvested = portfolioDeals.reduce((sum, deal) => sum + getDealCapital(deal), 0);
-  const navigate = useNavigate();
   const projectedIncome = portfolioDeals.reduce(
     (sum, deal) => sum + getProjectedIncome(deal, forecastConfig),
     0,
@@ -227,6 +381,7 @@ const SummaryCard = ({ forecastConfig, setForecastConfig, currencyState }: {
 
 const AssetAllocation = () => {
   const { deals } = useDeals();
+  const navigate = useNavigate();
   const portfolioDeals = getInvestedDeals(deals);
   const totalInvested = portfolioDeals.reduce((sum, deal) => sum + getDealCapital(deal), 0);
   const grouped = Object.values(
