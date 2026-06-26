@@ -33,7 +33,7 @@ import {
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { Link, useNavigate } from 'react-router-dom';
-import { useDeals, Deal } from '../context/DealContext';
+import { useDeals, Deal, Payout } from '../context/DealContext';
 import { useAuth } from '../context/AuthContext';
 import { useTheme } from '../context/ThemeContext';
 import { useSidebarCollapse } from '../hooks/useSidebarCollapse';
@@ -449,12 +449,6 @@ interface PaymentEvent {
   title: string;
 }
 
-const addMonths = (date: Date, months: number) => {
-  const next = new Date(date);
-  next.setMonth(next.getMonth() + months);
-  return next;
-};
-
 const paymentStyles: Record<PaymentStatus, { dot: string; card: string; text: string }> = {
   expected: { dot: 'bg-amber-400', card: 'bg-amber-500/10 border-amber-500/20', text: 'text-amber-300' },
   paid: { dot: 'bg-emerald-500', card: 'bg-emerald-500/10 border-emerald-500/20', text: 'text-emerald-300' },
@@ -462,22 +456,26 @@ const paymentStyles: Record<PaymentStatus, { dot: string; card: string; text: st
   closing: { dot: 'bg-slate-400', card: 'bg-surface-2 border-line', text: 'text-slate-300' },
 };
 
-const getPaymentEvents = (deals: Deal[]) => {
-  const today = getToday();
+// Реальные события календаря: фактические выплаты из коллекции payouts
+// (зелёные «Выплачено») + реальные даты окончания сделок. Без синтетики.
+const getPaymentEvents = (deals: Deal[], payouts: Payout[]) => {
   const events: PaymentEvent[] = [];
+  const dealName = (id: string) => deals.find(d => d.id === id)?.name || 'Сделка';
+
+  payouts.forEach(payout => {
+    const date = new Date(payout.date);
+    if (Number.isNaN(date.getTime())) return;
+    events.push({
+      id: `payout-${payout.id}`,
+      date,
+      dealName: dealName(payout.deal),
+      amount: payout.amount,
+      status: 'paid',
+      title: PAYOUT_KIND_LABEL[payout.kind] || 'Выплата',
+    });
+  });
 
   deals.forEach(deal => {
-    if (deal.paidOut && deal.paidOut > 0) {
-      events.push({
-        id: `${deal.id}-paid`,
-        date: addMonths(today, -1),
-        dealName: deal.name,
-        amount: deal.paidOut,
-        status: 'paid',
-        title: 'Выплачено',
-      });
-    }
-
     if (deal.termDate) {
       const endDate = new Date(deal.termDate);
       if (!Number.isNaN(endDate.getTime())) {
@@ -497,12 +495,12 @@ const getPaymentEvents = (deals: Deal[]) => {
 };
 
 const PaymentsCalendar = () => {
-  const { deals } = useDeals();
+  const { deals, payouts } = useDeals();
   const [expanded, setExpanded] = useState(false);
   const today = getToday();
   const [viewYear, setViewYear] = useState(today.getFullYear());
   const [viewMonth, setViewMonth] = useState(today.getMonth());
-  const events = getPaymentEvents(deals);
+  const events = getPaymentEvents(deals, payouts);
   const upcoming = events.filter(event => event.date >= today).slice(0, 3);
   const monthStart = new Date(viewYear, viewMonth, 1);
   const gridStart = new Date(monthStart);
@@ -521,7 +519,7 @@ const PaymentsCalendar = () => {
             <Calendar size={16} className="text-slate-500" /> Календарь выплат
           </button>
           <span className="text-[10px] font-bold text-slate-400 bg-surface-2 px-2 py-1 rounded border border-line uppercase">
-            Июнь 2026 г.
+            {new Date(viewYear, viewMonth, 1).toLocaleDateString('ru-RU', { month: 'long', year: 'numeric' })}
           </span>
         </div>
 
@@ -811,7 +809,7 @@ const SyndicateEvents = () => {
       <div>
         <div className="flex justify-between items-center mb-5">
           <h3 className="font-bold text-sm text-slate-100 flex items-center gap-2">
-            <Activity size={16} className="text-slate-500" /> События синдиката
+            <Activity size={16} className="text-slate-500" /> События по сделкам
           </h3>
           <span className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">{allEvents.length}</span>
         </div>

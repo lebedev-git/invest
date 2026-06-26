@@ -6,7 +6,6 @@ import {
   Layers,
   Plus,
   LogOut,
-  Building2,
   ChevronLeft,
   ChevronRight,
 } from 'lucide-react';
@@ -27,9 +26,6 @@ const NAV = [
   { to: '/deals', label: 'Сделки', icon: Layers, end: false },
 ];
 
-const roleLabel = (role?: string | null) =>
-  role === 'committee' ? 'Управляющий счет' : 'Партнёр-инвестор';
-
 const navClass = (collapsed: boolean) => ({ isActive }: { isActive: boolean }) =>
   `relative flex items-center gap-3 rounded-xl font-bold transition-all px-4 py-3.5 text-[13px] ${
     collapsed ? 'justify-center' : ''
@@ -41,7 +37,7 @@ const createClass = (collapsed: boolean) =>
   }`;
 
 export default function AppLayout() {
-  const { user, role, signOut } = useAuth();
+  const { signOut } = useAuth();
   const { collapsed, toggle } = useSidebarCollapse();
   const { deals, loading, error, reload } = useDeals();
 
