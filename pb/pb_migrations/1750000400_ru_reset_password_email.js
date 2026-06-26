@@ -8,9 +8,9 @@
 // где пользователь задаёт новый пароль — отдельную страницу в приложении не делаем.
 // Плейсхолдеры {APP_URL} и {TOKEN} — стандартные для этого шаблона.
 migrate((app) => {
-  const s = app.settings();
-  s.resetPasswordTemplate.subject = "Сброс пароля — X7 Invest";
-  s.resetPasswordTemplate.body =
+  const users = app.findCollectionByNameOrId("users");
+  users.resetPasswordTemplate.subject = "Сброс пароля — X7 Invest";
+  users.resetPasswordTemplate.body =
     "<p>Здравствуйте!</p>\n" +
     "<p>Вы запросили сброс пароля в портале X7 Invest. Нажмите на кнопку ниже, чтобы задать новый пароль:</p>\n" +
     "<p>\n" +
@@ -18,7 +18,7 @@ migrate((app) => {
     "</p>\n" +
     "<p><i>Если вы не запрашивали сброс пароля, просто проигнорируйте это письмо.</i></p>\n" +
     "<p>С уважением,<br/>команда X7 Invest</p>";
-  app.save(s);
+  app.save(users);
 }, (app) => {
   // Откат намеренно не трогаем (текст шаблона не критичен для работы).
 });
