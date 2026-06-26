@@ -24,6 +24,8 @@ interface AuthContextType {
   signUp: (email: string, password: string, fullName?: string) => Promise<string>;
   // Подтверждение кода из письма — завершает вход.
   confirmOtp: (otpId: string, code: string) => Promise<void>;
+  // Запрос письма со ссылкой для сброса пароля (подтверждение — на встроенной странице PB).
+  requestPasswordReset: (email: string) => Promise<void>;
   signOut: () => void;
 }
 
@@ -83,6 +85,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     await pb.collection('users').authWithOTP(otpId, code.trim());
   }, []);
 
+  // Сброс пароля: PocketBase шлёт письмо со ссылкой на встроенную страницу
+  // подтверждения (/_/#/auth/confirm-password-reset/{TOKEN}), где задаётся новый пароль.
+  const requestPasswordReset = useCallback(async (email: string) => {
+    await pb.collection('users').requestPasswordReset(email.trim());
+  }, []);
+
   const signOut = useCallback(() => {
     pb.authStore.clear();
   }, []);
@@ -91,7 +99,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   return (
     <AuthContext.Provider
-      value={{ user, role, isAuthenticated: !!user, loading, signIn, signUp, confirmOtp, signOut }}
+      value={{ user, role, isAuthenticated: !!user, loading, signIn, signUp, confirmOtp, requestPasswordReset, signOut }}
     >
       {children}
     </AuthContext.Provider>

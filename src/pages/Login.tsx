@@ -1,13 +1,13 @@
 import React, { useState } from 'react';
 import { Navigate, useLocation, useNavigate } from 'react-router-dom';
 import { motion } from 'motion/react';
-import { LogIn, UserPlus, Loader2, MailCheck } from 'lucide-react';
+import { LogIn, UserPlus, Loader2, MailCheck, Eye, EyeOff, KeyRound } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 
 type Mode = 'signin' | 'signup';
 
 export default function Login() {
-  const { signIn, signUp, confirmOtp, isAuthenticated } = useAuth();
+  const { signIn, signUp, confirmOtp, requestPasswordReset, isAuthenticated } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
   const from = (location.state as any)?.from?.pathname || '/';
@@ -18,10 +18,15 @@ export default function Login() {
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
 
   // Шаг подтверждения кода из письма (после регистрации).
   const [otpId, setOtpId] = useState<string | null>(null);
   const [code, setCode] = useState('');
+
+  // Экран восстановления пароля.
+  const [resetMode, setResetMode] = useState(false);
+  const [resetSent, setResetSent] = useState(false);
 
   // Уже вошли — уводим на портал.
   if (isAuthenticated) {
@@ -33,6 +38,23 @@ export default function Login() {
     setError('');
     setOtpId(null);
     setCode('');
+    setResetMode(false);
+    setResetSent(false);
+  };
+
+  const handleResetRequest = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setError('');
+    setLoading(true);
+    try {
+      await requestPasswordReset(email);
+      // Не раскрываем, существует ли аккаунт (защита от перебора email).
+      setResetSent(true);
+    } catch {
+      setResetSent(true);
+    } finally {
+      setLoading(false);
+    }
   };
 
   const mapError = (err: any): string => {
@@ -80,6 +102,80 @@ export default function Login() {
   };
 
   const isSignup = mode === 'signup';
+
+  // --- Экран восстановления пароля ---
+  if (resetMode) {
+    return (
+      <div className="min-h-screen w-full bg-base text-slate-100 font-sans flex items-center justify-center p-4 selection:bg-emerald-500 selection:text-white">
+        <motion.div
+          initial={{ opacity: 0, y: 16 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="w-full max-w-sm card p-8"
+        >
+          <div className="flex flex-col items-center text-center mb-8">
+            <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-emerald-400 to-emerald-600 flex items-center justify-center shadow-lg shadow-emerald-500/20 mb-4">
+              <KeyRound className="text-white" size={22} />
+            </div>
+            <h1 className="text-2xl font-black tracking-tight text-slate-50">Сброс пароля</h1>
+            <p className="text-xs text-slate-500 mt-1">
+              {resetSent
+                ? 'Если аккаунт с таким email существует, мы отправили на него ссылку для сброса пароля. Проверьте почту (в том числе папку «Спам»).'
+                : 'Укажите email, и мы отправим ссылку для смены пароля.'}
+            </p>
+          </div>
+
+          {resetSent ? (
+            <button
+              type="button"
+              onClick={() => switchMode('signin')}
+              className="w-full py-3 rounded-xl bg-emerald-500 text-white font-black text-xs uppercase tracking-widest hover:bg-emerald-400 transition-all flex items-center justify-center gap-2 shadow-lg shadow-emerald-500/20"
+            >
+              <LogIn size={16} />
+              Вернуться ко входу
+            </button>
+          ) : (
+            <form onSubmit={handleResetRequest} className="flex flex-col gap-4">
+              <div className="flex flex-col gap-2">
+                <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Логин (email)</label>
+                <input
+                  type="email"
+                  value={email}
+                  onChange={e => setEmail(e.target.value)}
+                  autoComplete="username"
+                  required
+                  placeholder="you@example.com"
+                  className="field"
+                />
+              </div>
+
+              {error && (
+                <p className="text-xs font-bold text-rose-400 bg-rose-500/10 border border-rose-500/20 rounded-xl px-3 py-2">
+                  {error}
+                </p>
+              )}
+
+              <button
+                type="submit"
+                disabled={loading}
+                className="mt-2 w-full py-3 rounded-xl bg-emerald-500 text-white font-black text-xs uppercase tracking-widest hover:bg-emerald-400 disabled:opacity-60 transition-all flex items-center justify-center gap-2 shadow-lg shadow-emerald-500/20"
+              >
+                {loading ? <Loader2 size={16} className="animate-spin" /> : <KeyRound size={16} />}
+                Отправить ссылку
+              </button>
+
+              <button
+                type="button"
+                onClick={() => switchMode('signin')}
+                className="text-[11px] text-slate-500 hover:text-slate-300 font-bold transition-colors"
+              >
+                ← Вернуться ко входу
+              </button>
+            </form>
+          )}
+        </motion.div>
+      </div>
+    );
+  }
 
   // --- Экран ввода кода из письма ---
   if (otpId) {
@@ -213,17 +309,38 @@ export default function Login() {
             />
           </div>
           <div className="flex flex-col gap-2">
-            <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Пароль</label>
-            <input
-              type="password"
-              value={password}
-              onChange={e => setPassword(e.target.value)}
-              autoComplete={isSignup ? 'new-password' : 'current-password'}
-              required
-              minLength={isSignup ? 8 : undefined}
-              placeholder="••••••••"
-              className="field"
-            />
+            <div className="flex items-center justify-between">
+              <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Пароль</label>
+              {!isSignup && (
+                <button
+                  type="button"
+                  onClick={() => { setError(''); setResetMode(true); setResetSent(false); }}
+                  className="text-[10px] font-bold text-emerald-400 hover:text-emerald-300 transition-colors"
+                >
+                  Забыли пароль?
+                </button>
+              )}
+            </div>
+            <div className="relative">
+              <input
+                type={showPassword ? 'text' : 'password'}
+                value={password}
+                onChange={e => setPassword(e.target.value)}
+                autoComplete={isSignup ? 'new-password' : 'current-password'}
+                required
+                minLength={isSignup ? 8 : undefined}
+                placeholder="••••••••"
+                className="field pr-11"
+              />
+              <button
+                type="button"
+                onClick={() => setShowPassword(v => !v)}
+                aria-label={showPassword ? 'Скрыть пароль' : 'Показать пароль'}
+                className="absolute inset-y-0 right-0 px-3 flex items-center text-slate-500 hover:text-slate-300 transition-colors"
+              >
+                {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+              </button>
+            </div>
             {isSignup && (
               <p className="text-[10px] text-slate-500">Минимум 8 символов.</p>
             )}
