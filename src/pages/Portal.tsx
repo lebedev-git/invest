@@ -1252,12 +1252,18 @@ const AnalyticsPage = () => {
 
 // --- Выплаты (из реальных событий по сделкам) ---
 
+const PAYOUT_KIND_LABEL: Record<string, string> = {
+  dividend: 'Дивиденды',
+  return: 'Возврат тела',
+  other: 'Прочее',
+};
+
 const PaymentsPage = () => {
-  const { deals } = useDeals();
-  // Реальные выплаты: объекты с фактически выплаченной суммой.
-  const rows = getPaymentEvents(deals)
-    .filter(event => event.status === 'paid' && event.amount > 0)
-    .sort((a, b) => b.date.getTime() - a.date.getTime());
+  const { deals, payouts } = useDeals();
+  const dealName = (id: string) => deals.find(d => d.id === id)?.name || '—';
+  // Реальные выплаты из коллекции payouts, новые сверху.
+  const rows = [...payouts].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+  const total = rows.reduce((sum, p) => sum + p.amount, 0);
 
   return (
     <motion.div
@@ -1273,7 +1279,7 @@ const PaymentsPage = () => {
       <div className="card overflow-hidden">
         <div className="p-6 border-b border-line flex justify-between items-center bg-surface-2/30">
           <h3 className="text-base font-bold text-slate-100 uppercase tracking-tight">Реестр транзакций</h3>
-          <span className="text-xs font-bold text-[#10b981] bg-[#10b981]/10 px-2.5 py-1 rounded-lg border border-[#10b981]/20">Всего операций: {rows.length}</span>
+          <span className="text-xs font-bold text-[#10b981] bg-[#10b981]/10 px-2.5 py-1 rounded-lg border border-[#10b981]/20">Всего выплачено: {formatRub(total)}</span>
         </div>
         {rows.length ? (
           <div className="overflow-x-auto">
@@ -1282,14 +1288,16 @@ const PaymentsPage = () => {
                 <tr className="border-b border-line text-[10px] font-black uppercase text-slate-500 tracking-wider bg-surface-2/10">
                   <th className="p-4 pl-6">Дата</th>
                   <th className="p-4">Объект</th>
+                  <th className="p-4">Тип</th>
                   <th className="p-4 text-right">Сумма</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-line text-sm">
                 {rows.map(row => (
                   <tr key={row.id} className="hover:bg-white/5 transition-colors">
-                    <td className="p-4 pl-6 font-mono text-slate-400">{row.date.toLocaleDateString('ru-RU')}</td>
-                    <td className="p-4 font-bold text-slate-200">{row.dealName}</td>
+                    <td className="p-4 pl-6 font-mono text-slate-400">{new Date(row.date).toLocaleDateString('ru-RU')}</td>
+                    <td className="p-4 font-bold text-slate-200">{dealName(row.deal)}</td>
+                    <td className="p-4 text-slate-400">{PAYOUT_KIND_LABEL[row.kind] || 'Прочее'}{row.comment ? ` · ${row.comment}` : ''}</td>
                     <td className="p-4 text-right font-bold text-[#10b981] font-mono">+{Math.round(row.amount).toLocaleString('ru-RU')} ₽</td>
                   </tr>
                 ))}
@@ -1298,7 +1306,7 @@ const PaymentsPage = () => {
           </div>
         ) : (
           <div className="p-12 text-center text-slate-500 font-medium text-sm">
-            Выплат пока нет. Они появятся, когда по сделке будет указана фактически выплаченная сумма.
+            Выплат пока нет. Добавьте выплаты в карточке сделки — они появятся здесь.
           </div>
         )}
       </div>

@@ -17,8 +17,10 @@ import {
   Trash2,
   Download,
   Loader2,
+  Wallet,
+  Plus,
 } from 'lucide-react';
-import { Deal, useDeals } from '../../context/DealContext';
+import { Deal, Payout, PayoutKind, useDeals } from '../../context/DealContext';
 import { statusColor } from '../../utils/dealDisplay';
 
 const money = (value?: number | string) => {
@@ -71,7 +73,7 @@ const buildHistory = (deal: Deal) => {
 export default function ProjectView() {
   const { id } = useParams();
   const navigate = useNavigate();
-  const { deals, uploadDealFiles, removeDealFile, fileUrl } = useDeals();
+  const { deals, uploadDealFiles, removeDealFile, fileUrl, payouts, addPayout, deletePayout } = useDeals();
   const deal = deals.find(d => d.id === id);
 
   if (!deal) {
@@ -235,6 +237,14 @@ export default function ProjectView() {
             fileUrl={fileUrl}
             onUpload={files => uploadDealFiles(deal.id, 'documents', files)}
             onRemove={name => removeDealFile(deal.id, 'documents', name)}
+          />
+
+          {/* Payouts */}
+          <PayoutsCard
+            dealId={deal.id}
+            payouts={payouts.filter(p => p.deal === deal.id)}
+            onAdd={addPayout}
+            onDelete={deletePayout}
           />
         </div>
 
@@ -476,6 +486,103 @@ function DocumentsCard({ deal, fileUrl, onUpload, onRemove }: FileCardProps) {
         {busy ? <Loader2 size={14} className="animate-spin" /> : <Upload size={14} />} Загрузить документ
       </button>
       {error && <p className="text-[11px] text-rose-400 font-bold mt-2 text-center">{error}</p>}
+    </Card>
+  );
+}
+
+const PAYOUT_KIND_LABELS: Record<PayoutKind, string> = {
+  dividend: 'Дивиденды',
+  return: 'Возврат тела',
+  other: 'Прочее',
+};
+
+// Учёт фактических выплат по сделке: добавление/список/удаление.
+function PayoutsCard({ dealId, payouts, onAdd, onDelete }: {
+  dealId: string;
+  payouts: Payout[];
+  onAdd: (payout: Omit<Payout, 'id'>) => Promise<void>;
+  onDelete: (id: string) => Promise<void>;
+}) {
+  const [date, setDate] = useState('');
+  const [amount, setAmount] = useState('');
+  const [kind, setKind] = useState<PayoutKind>('dividend');
+  const [comment, setComment] = useState('');
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState('');
+
+  const total = payouts.reduce((sum, p) => sum + p.amount, 0);
+
+  const handleAdd = async () => {
+    setError('');
+    const value = Number(String(amount).replace(',', '.').replace(/\s/g, ''));
+    if (!date || !value) {
+      setError('Укажите дату и сумму выплаты.');
+      return;
+    }
+    setBusy(true);
+    try {
+      await onAdd({ deal: dealId, date, amount: value, kind, comment: comment.trim() });
+      setDate(''); setAmount(''); setComment(''); setKind('dividend');
+    } catch {
+      setError('Не удалось сохранить выплату.');
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  return (
+    <Card icon={Wallet} title="Выплаты">
+      {payouts.length > 0 ? (
+        <div className="divide-y divide-line mb-4">
+          {payouts.map(p => (
+            <div key={p.id} className="flex items-center justify-between gap-3 py-3 first:pt-0">
+              <div className="min-w-0">
+                <div className="flex items-center gap-2">
+                  <span className="text-sm font-bold text-emerald-600 font-mono">{money(p.amount)}</span>
+                  <span className="text-[9px] font-black uppercase tracking-wider text-slate-400 bg-surface-2 border border-line rounded px-1.5 py-0.5">{PAYOUT_KIND_LABELS[p.kind]}</span>
+                </div>
+                <p className="text-[11px] text-slate-500 mt-0.5">{formatDate(p.date)}{p.comment ? ` · ${p.comment}` : ''}</p>
+              </div>
+              <button
+                onClick={() => onDelete(p.id)}
+                title="Удалить"
+                className="w-8 h-8 rounded-lg bg-surface-2 border border-line text-slate-400 hover:text-rose-400 hover:border-rose-500/50 transition-all flex items-center justify-center shrink-0"
+              >
+                <Trash2 size={14} />
+              </button>
+            </div>
+          ))}
+          <div className="flex justify-between items-center pt-3">
+            <span className="text-[10px] font-black uppercase tracking-widest text-slate-400">Всего выплачено</span>
+            <span className="text-sm font-black text-slate-100 font-mono">{money(total)}</span>
+          </div>
+        </div>
+      ) : (
+        <EmptyState text="Выплат пока нет. Добавьте фактические выплаты — они появятся в портфеле и реестре инвестора." />
+      )}
+
+      <div className="flex flex-col gap-2 pt-1">
+        <div className="grid grid-cols-2 gap-2">
+          <input type="date" value={date} onChange={e => setDate(e.target.value)} className="field" />
+          <input type="text" inputMode="decimal" value={amount} onChange={e => setAmount(e.target.value)} placeholder="Сумма, ₽" className="field" />
+        </div>
+        <div className="grid grid-cols-2 gap-2">
+          <select value={kind} onChange={e => setKind(e.target.value as PayoutKind)} className="field">
+            <option value="dividend">Дивиденды</option>
+            <option value="return">Возврат тела</option>
+            <option value="other">Прочее</option>
+          </select>
+          <input type="text" value={comment} onChange={e => setComment(e.target.value)} placeholder="Комментарий" className="field" />
+        </div>
+        <button
+          onClick={handleAdd}
+          disabled={busy}
+          className="w-full py-3 rounded-xl bg-emerald-500 text-white text-[10px] font-black uppercase tracking-widest hover:bg-emerald-400 transition-all flex items-center justify-center gap-2 disabled:opacity-60"
+        >
+          {busy ? <Loader2 size={14} className="animate-spin" /> : <Plus size={14} />} Добавить выплату
+        </button>
+        {error && <p className="text-[11px] text-rose-400 font-bold text-center">{error}</p>}
+      </div>
     </Card>
   );
 }

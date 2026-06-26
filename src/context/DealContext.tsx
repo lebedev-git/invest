@@ -41,6 +41,17 @@ export interface DealInvestor {
   amount: number;
 }
 
+export type PayoutKind = 'dividend' | 'return' | 'other';
+
+export interface Payout {
+  id: string;
+  deal: string;
+  date: string;
+  amount: number;
+  kind: PayoutKind;
+  comment?: string;
+}
+
 export interface Deal {
   id: string;
   name: string;
@@ -213,6 +224,10 @@ interface DealContextType {
   saveDeal: (deal: Deal) => Promise<void>;
   deleteDeal: (id: string) => Promise<void>;
   reload: () => Promise<void>;
+  // Выплаты по сделкам.
+  payouts: Payout[];
+  addPayout: (payout: Omit<Payout, 'id'>) => Promise<void>;
+  deletePayout: (id: string) => Promise<void>;
   // Файлы сделки (изображения/документы).
   uploadDealFiles: (dealId: string, field: 'images' | 'documents', files: File[]) => Promise<void>;
   removeDealFile: (dealId: string, field: 'images' | 'documents', filename: string) => Promise<void>;
@@ -225,6 +240,7 @@ const DealContext = createContext<DealContextType | undefined>(undefined);
 export function DealProvider({ children }: { children: React.ReactNode }) {
   const { isAuthenticated } = useAuth();
   const [deals, setDeals] = useState<Deal[]>([]);
+  const [payouts, setPayouts] = useState<Payout[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [fileToken, setFileToken] = useState('');
@@ -240,9 +256,10 @@ export function DealProvider({ children }: { children: React.ReactNode }) {
       // file-токен нужен для доступа к owner-scoped файлам сделок (картинки/документы).
       pb.files.getToken().then(setFileToken).catch(() => setFileToken(''));
 
-      const [dealRecs, historyRecs] = await Promise.all([
+      const [dealRecs, historyRecs, payoutRecs] = await Promise.all([
         pb.collection('deals').getFullList({ sort: '-created' }),
         pb.collection('status_history').getFullList({ sort: 'created' }),
+        pb.collection('payouts').getFullList({ sort: '-date' }),
       ]);
 
       const byDeal: Record<string, StatusHistoryItem[]> = {};
@@ -250,9 +267,19 @@ export function DealProvider({ children }: { children: React.ReactNode }) {
         (byDeal[h.deal] ||= []).push({ id: h.id, status: h.status, date: h.created, comment: h.comment });
       }
 
+      // Сумма фактических выплат по каждой сделке → реальный paidOut.
+      const paidByDeal: Record<string, number> = {};
+      const payoutList: Payout[] = (payoutRecs as any[]).map(p => {
+        paidByDeal[p.deal] = (paidByDeal[p.deal] || 0) + (Number(p.amount) || 0);
+        return { id: p.id, deal: p.deal, date: p.date, amount: Number(p.amount) || 0, kind: p.kind || 'other', comment: p.comment };
+      });
+      setPayouts(payoutList);
+
       setDeals((dealRecs as any[]).map(rec => {
         const deal = recordToDeal(rec);
         deal.statusHistory = byDeal[rec.id] || [];
+        // paidOut — сумма реальных выплат (с откатом на легаси-поле в data).
+        deal.paidOut = paidByDeal[rec.id] ?? deal.paidOut ?? 0;
         return deal;
       }));
     } catch (e: any) {
@@ -336,6 +363,26 @@ export function DealProvider({ children }: { children: React.ReactNode }) {
     }
   }, [loadDeals]);
 
+  const addPayout = useCallback(async (payout: Omit<Payout, 'id'>) => {
+    try {
+      await pb.collection('payouts').create({ ...payout, created_by: pb.authStore.record?.id });
+      await loadDeals();
+    } catch (e) {
+      console.error('Не удалось добавить выплату', e);
+      throw e;
+    }
+  }, [loadDeals]);
+
+  const deletePayout = useCallback(async (id: string) => {
+    try {
+      await pb.collection('payouts').delete(id);
+      await loadDeals();
+    } catch (e) {
+      console.error('Не удалось удалить выплату', e);
+      throw e;
+    }
+  }, [loadDeals]);
+
   // URL файла сделки с file-токеном и (опц.) превью-размером.
   const fileUrl = useCallback((dealId: string, filename: string, thumb?: string) => {
     const base = pb.baseURL.endsWith('/') ? pb.baseURL.slice(0, -1) : pb.baseURL;
@@ -347,7 +394,7 @@ export function DealProvider({ children }: { children: React.ReactNode }) {
   }, [fileToken]);
 
   return (
-    <DealContext.Provider value={{ deals, loading, error, saveDeal, deleteDeal, reload: loadDeals, uploadDealFiles, removeDealFile, fileUrl }}>
+    <DealContext.Provider value={{ deals, loading, error, saveDeal, deleteDeal, reload: loadDeals, uploadDealFiles, removeDealFile, fileUrl, payouts, addPayout, deletePayout }}>
       {children}
     </DealContext.Provider>
   );
