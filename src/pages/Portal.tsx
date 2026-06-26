@@ -360,21 +360,6 @@ const SummaryCard = ({ forecastConfig, setForecastConfig, currencyState }: {
         </p>
         <ForecastControls config={forecastConfig} onChange={setForecastConfig} />
       </div>
-
-      <div className="grid grid-cols-3 gap-3 mt-6 border-t border-line pt-5 z-10">
-        <div>
-          <p className="text-[10px] uppercase tracking-wider text-slate-500 font-bold mb-1">Фактически выплачено</p>
-          <p className="text-base font-bold tabular-nums text-slate-100">{formatCurrency(paidOut, currency, rates)}</p>
-        </div>
-        <div>
-          <p className="text-[10px] uppercase tracking-wider text-slate-500 font-bold mb-1">Прогноз дохода</p>
-          <p className="text-base font-bold tabular-nums text-slate-100">{formatCurrency(projectedIncome, currency, rates)}</p>
-        </div>
-        <div>
-          <p className="text-[10px] uppercase tracking-wider text-slate-500 font-bold mb-1">Доходность (IRR)</p>
-          <p className="text-base font-bold tabular-nums text-[#10b981]">{annualYield > 0 ? `${annualYield.toFixed(1)}%` : '—'} годовых</p>
-        </div>
-      </div>
     </section>
   );
 };
@@ -858,9 +843,11 @@ const StatStrip = ({ forecastConfig }: { forecastConfig: ForecastConfig }) => {
   const annualYield = totalInvested > 0 ? (annualIncome / totalInvested) * 100 : 0;
   const paybacks = portfolioDeals.map(getPaybackYears).filter(value => value > 0);
   const avgPayback = paybacks.length ? paybacks.reduce((sum, value) => sum + value, 0) / paybacks.length : 0;
+  const totalPaid = portfolioDeals.reduce((sum, deal) => sum + (deal.paidOut || 0), 0);
 
   const cells = [
     { icon: Wallet, label: 'Общая вложенность', value: totalInvested ? formatMln(totalInvested) : '—', accent: 'text-slate-100' },
+    { icon: Download, label: 'Фактически выплачено', value: totalPaid ? formatRub(totalPaid) : '—', accent: 'text-slate-100' },
     { icon: TrendingUp, label: 'Прогноз дохода', value: projectedIncome ? formatSignedRub(projectedIncome) : '—', accent: projectedIncome >= 0 ? 'text-[#10b981]' : 'text-rose-400' },
     { icon: Clock, label: 'Средняя окупаемость', value: avgPayback ? `${avgPayback.toFixed(2)} лет` : '—', accent: 'text-slate-100' },
     { icon: Target, label: 'Средняя доходность (IRR)', value: annualYield ? `${annualYield.toFixed(1)}%` : '—', accent: 'text-[#10b981]' },
@@ -868,7 +855,7 @@ const StatStrip = ({ forecastConfig }: { forecastConfig: ForecastConfig }) => {
   ];
 
   return (
-    <section className="col-span-12 bg-surface border border-line rounded-3xl shadow-lg shadow-black/30 grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 divide-y md:divide-y-0 md:divide-x divide-line">
+    <section className="col-span-12 bg-surface border border-line rounded-3xl shadow-lg shadow-black/30 grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 divide-y md:divide-y-0 md:divide-x divide-line">
       {cells.map(cell => {
         const Icon = cell.icon;
         return (
@@ -1002,11 +989,6 @@ export const AnalyticsPage = () => {
   const { deals } = useDeals();
   const portfolioDeals = getInvestedDeals(deals);
   const totalInvested = portfolioDeals.reduce((sum, deal) => sum + getDealCapital(deal), 0);
-  const annualIncome = portfolioDeals.reduce((sum, deal) => sum + getAnnualProjectedIncome(deal), 0);
-  const annualYield = totalInvested > 0 ? (annualIncome / totalInvested) * 100 : 0;
-  const totalPaid = portfolioDeals.reduce((sum, deal) => sum + (deal.paidOut || 0), 0);
-  const paybacks = portfolioDeals.map(getPaybackYears).filter((value): value is number => !!value && value > 0);
-  const avgPayback = paybacks.length ? paybacks.reduce((sum, value) => sum + value, 0) / paybacks.length : 0;
 
   // Распределение капитала по типам объектов (реальное).
   const allocation = Object.values(
@@ -1034,30 +1016,15 @@ export const AnalyticsPage = () => {
     >
       <div className="flex flex-col gap-2">
         <h2 className="text-3xl font-bold text-slate-100 tracking-tight">Аналитика портфеля</h2>
-        <p className="text-slate-500 font-medium">Метрики рассчитаны по вашим реальным сделкам</p>
+        <p className="text-slate-500 font-medium">Графики по вашим реальным сделкам. Сводные цифры — на «Главной».</p>
       </div>
 
       {portfolioDeals.length === 0 ? (
         <div className="card p-12 text-center text-slate-500 font-medium text-sm">
-          Пока нет данных для аналитики. Добавьте сделки с вложениями — метрики появятся автоматически.
+          Пока нет данных для аналитики. Добавьте сделки с вложениями — графики появятся автоматически.
         </div>
       ) : (
         <>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            <div className="card p-6 flex flex-col gap-2">
-              <span className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">Средняя доходность (IRR)</span>
-              <p className="text-3xl font-black text-[#10b981]">{annualYield > 0 ? `${annualYield.toFixed(1)}%` : '—'} <span className="text-xs text-slate-400 font-normal">в годовых</span></p>
-            </div>
-            <div className="card p-6 flex flex-col gap-2">
-              <span className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">Фактически выплачено</span>
-              <p className="text-3xl font-black text-slate-100">{formatRub(totalPaid)}</p>
-            </div>
-            <div className="card p-6 flex flex-col gap-2">
-              <span className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">Средняя окупаемость</span>
-              <p className="text-3xl font-black text-slate-100">{avgPayback ? `${avgPayback.toFixed(2)} лет` : '—'}</p>
-            </div>
-          </div>
-
           <div className="grid grid-cols-12 gap-6">
             <div className="col-span-12 lg:col-span-8 card p-6 flex flex-col gap-4">
               <h3 className="text-base font-bold text-slate-100 uppercase tracking-tight">Чистый годовой поток по объектам</h3>
