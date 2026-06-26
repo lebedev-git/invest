@@ -3,6 +3,7 @@ import { Outlet, NavLink } from 'react-router-dom';
 import { LogOut, Home } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { ThemeToggle } from '../Portal';
+import { X7Logo } from '../../components/X7Logo';
 
 export default function AdminLayout() {
   const { user, signOut } = useAuth();
@@ -10,9 +11,7 @@ export default function AdminLayout() {
     <div className="flex flex-col h-screen bg-base text-slate-100 font-sans selection:bg-emerald-500 selection:text-white overflow-hidden">
       <header className="h-16 bg-surface border-b border-line flex items-center justify-between px-4 sm:px-8 shrink-0 shadow-sm z-10">
         <div className="flex items-center gap-4">
-          <div className="w-8 h-8 bg-emerald-500 rounded-lg flex items-center justify-center shadow-lg shadow-emerald-500/20">
-            <span className="text-white font-black text-sm">X7</span>
-          </div>
+          <X7Logo className="w-8 h-8" />
           <h1 className="text-sm font-black tracking-tight uppercase leading-none">Создание сделок</h1>
         </div>
 

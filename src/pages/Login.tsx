@@ -3,6 +3,7 @@ import { Navigate, useLocation, useNavigate } from 'react-router-dom';
 import { motion } from 'motion/react';
 import { LogIn, UserPlus, Loader2, MailCheck, Eye, EyeOff, KeyRound } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
+import { X7Logo } from '../components/X7Logo';
 
 type Mode = 'signin' | 'signup';
 
@@ -248,9 +249,7 @@ export default function Login() {
         className="w-full max-w-sm card p-8"
       >
         <div className="flex flex-col items-center text-center mb-8">
-          <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-emerald-400 to-emerald-600 flex items-center justify-center shadow-lg shadow-emerald-500/20 mb-4">
-            <span className="text-white font-black">X7</span>
-          </div>
+          <X7Logo className="w-12 h-12 mb-4" />
           <h1 className="text-2xl font-black tracking-tight text-slate-50">
             {isSignup ? 'Регистрация' : 'Вход в систему'}
           </h1>

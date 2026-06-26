@@ -67,17 +67,7 @@ import {
   getPaybackYears,
 } from '../utils/dealMetrics';
 
-// Кастомный 3D логотип X7 Invest (изометрический куб в изумрудных тонах)
-const X7Logo = () => (
-  <svg className="w-8 h-8 shrink-0" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
-    {/* Top face */}
-    <path d="M50 15 L15 35 L50 55 L85 35 Z" fill="#10b981" />
-    {/* Left face */}
-    <path d="M15 35 L15 75 L50 95 L50 55 Z" fill="#059669" />
-    {/* Right face */}
-    <path d="M85 35 L85 75 L50 95 L50 55 Z" fill="#047857" />
-  </svg>
-);
+import { X7Logo } from '../components/X7Logo';
 
 // Фотографии коммерческих объектов с Unsplash для высокого визуального соответствия макету
 const getProjectImage = (name: string) => {
