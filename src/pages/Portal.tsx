@@ -27,7 +27,6 @@ import {
   LogOut,
   BarChart2,
   FileText,
-  MessageSquare,
   ArrowRight,
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
@@ -119,7 +118,6 @@ const NAV: NavConfig[] = [
   { id: 'new-projects', label: 'Проекты', icon: Layers },
   { id: 'analytics', label: 'Аналитика', icon: BarChart2 },
   { id: 'payments', label: 'Выплаты', icon: Calendar },
-  { id: 'messages', label: 'Сообщения', icon: MessageSquare },
 ];
 
 const NavItems = ({ activeTab, setActiveTab, compact }: {
@@ -1306,24 +1304,6 @@ const PaymentsPage = () => {
   );
 };
 
-// --- Сообщения (реального источника пока нет) ---
-
-const MessagesPage = () => (
-  <motion.div
-    initial={{ opacity: 0, y: 10 }}
-    animate={{ opacity: 1, y: 0 }}
-    className="flex flex-col gap-6"
-  >
-    <div className="flex flex-col gap-2">
-      <h2 className="text-3xl font-bold text-slate-100 tracking-tight">Сообщения и новости</h2>
-      <p className="text-slate-500 font-medium">Официальные уведомления и новости синдиката</p>
-    </div>
-    <div className="card p-12 text-center text-slate-500 font-medium text-sm">
-      Сообщений пока нет.
-    </div>
-  </motion.div>
-);
-
 // --- Main App ---
 
 export default function Portal() {
@@ -1348,7 +1328,6 @@ export default function Portal() {
                 {activeTab === 'new-projects' && <NewProjectsPage />}
                 {activeTab === 'analytics' && <AnalyticsPage />}
                 {activeTab === 'payments' && <PaymentsPage />}
-                {activeTab === 'messages' && <MessagesPage />}
               </>
             )}
           </div>
