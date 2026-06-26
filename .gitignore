@@ -18,3 +18,5 @@ coverage/
 /pb/CHANGELOG.md
 /pb/LICENSE.md
 .aider*
+/deploy-ssh.js
+
