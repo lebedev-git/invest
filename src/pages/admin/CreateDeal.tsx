@@ -540,31 +540,15 @@ export default function CreateDeal() {
   };
 
   return (
-    <div className="max-w-[1600px] mx-auto flex flex-col gap-6 pb-24">
+    <div className="max-w-[1600px] mx-auto flex flex-col gap-6 pb-6">
       {/* Header */}
-      <div className="bg-surface border border-line p-6 rounded-2xl shadow-sm flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
-        <div>
-          <h1 className="text-2xl font-black text-slate-100 uppercase tracking-tight">
-            {isEdit ? 'Редактировать сделку' : 'Добавить сделку'}
-          </h1>
-          <p className="text-slate-500 text-xs mt-1 font-medium">
-            Заполните параметры актива, чтобы сделка появилась в вашем инвестиционном портфеле
-          </p>
-        </div>
-        <div className="flex gap-3 shrink-0">
-          <button 
-            onClick={() => navigate('/deals')}
-            className="px-5 py-2.5 bg-surface text-slate-300 font-bold text-xs uppercase tracking-widest rounded-xl border border-line hover:bg-surface-2 transition-all shadow-sm"
-          >
-            Отмена
-          </button>
-          <button 
-            onClick={() => handleSubmit(true)}
-            className="px-5 py-2.5 bg-surface-2 text-slate-300 font-black text-xs uppercase tracking-widest rounded-xl hover:bg-surface-2 transition-all shadow-sm"
-          >
-            Сохранить черновик
-          </button>
-        </div>
+      <div className="bg-surface border border-line p-6 rounded-2xl shadow-sm">
+        <h1 className="text-2xl font-black text-slate-100 uppercase tracking-tight">
+          {isEdit ? 'Редактировать сделку' : 'Добавить сделку'}
+        </h1>
+        <p className="text-slate-500 text-xs mt-1 font-medium">
+          Заполните параметры актива, чтобы сделка появилась в вашем инвестиционном портфеле
+        </p>
       </div>
 
 
@@ -1667,8 +1651,8 @@ export default function CreateDeal() {
         </div>
       </div>
 
-      {/* Sticky Footer */}
-      <div className="fixed bottom-0 left-0 right-0 bg-surface border-t border-line py-4 px-6 md:px-12 flex justify-between items-center shadow-lg z-30">
+      {/* Панель действий в потоке (не плавающая) */}
+      <div className="bg-surface border border-line rounded-2xl p-4 flex justify-between items-center shadow-sm">
         <button 
           onClick={() => navigate('/deals')}
           className="flex items-center gap-2 px-5 py-2.5 bg-surface text-slate-300 font-bold text-xs uppercase tracking-widest rounded-xl border border-line hover:bg-surface-2 transition-all shadow-sm"
