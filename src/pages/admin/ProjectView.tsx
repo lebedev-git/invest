@@ -148,9 +148,9 @@ export default function ProjectView() {
           <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mt-6">
             <HeroMetric label="Сумма инвестиций" value={money(metrics?.investmentSum)} />
             <HeroMetric label="Цена объекта" value={money(metrics?.objectPrice ?? deal.purchasePrice)} />
-            <HeroMetric label="Чистый поток (NOI)" value={money(metrics?.noi)} accent />
-            <HeroMetric label="Денежный поток / мес" value={money(metrics?.cashFlow)} accent />
-            <HeroMetric label="ROE" value={metrics?.roe ? `${metrics.roe.toFixed(1)}%` : '—'} accent />
+            <HeroMetric label="Чистый поток (NOI)" value={money(metrics?.noi)} accent negative={(metrics?.noi ?? 0) < 0} />
+            <HeroMetric label="Денежный поток / мес" value={money(metrics?.cashFlow)} accent negative={(metrics?.cashFlow ?? 0) < 0} />
+            <HeroMetric label="ROE" value={metrics?.roe ? `${metrics.roe.toFixed(1)}%` : '—'} accent negative={(metrics?.roe ?? 0) < 0} />
             <HeroMetric
               label="Окупаемость"
               value={metrics && typeof metrics.paybackYears === 'number' ? `${metrics.paybackYears.toFixed(1)} лет` : '—'}
@@ -287,11 +287,13 @@ export default function ProjectView() {
   );
 }
 
-function HeroMetric({ label, value, accent }: { label: string; value: string; accent?: boolean }) {
+function HeroMetric({ label, value, accent, negative }: { label: string; value: string; accent?: boolean; negative?: boolean }) {
+  // accent-метрики (поток/доходность) красим по знаку: убыток — красным, прибыль — зелёным.
+  const valueColor = accent ? (negative ? 'text-rose-400' : 'text-emerald-400') : 'text-white';
   return (
     <div className="border border-white/10 rounded-2xl p-3 bg-white/5">
       <p className="text-[9px] uppercase text-white/40 font-black mb-1 leading-tight">{label}</p>
-      <p className={`text-base font-bold tabular-nums ${accent ? 'text-emerald-400' : 'text-white'}`}>{value}</p>
+      <p className={`text-base font-bold tabular-nums ${valueColor}`}>{value}</p>
     </div>
   );
 }
