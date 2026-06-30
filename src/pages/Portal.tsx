@@ -51,7 +51,8 @@ import {
   getDealCapital,
   getPaybackYears,
 } from '../utils/dealMetrics';
-import { formatRub, formatMln, formatSignedRub } from '../utils/format';
+import { formatRub, formatMln, formatSignedRub, formatMoic } from '../utils/format';
+import { computeDealReturns } from '../utils/returns';
 
 import {
   PROJECT_IMAGE_PLACEHOLDER,
@@ -397,7 +398,7 @@ const ProjectsCards = ({ forecastConfig, onSelectProject, currencyState }: {
   currencyState: ReturnType<typeof useCurrencyRates>;
   setActiveTab?: (tab: string) => void;
 }) => {
-  const { deals, fileUrl } = useDeals();
+  const { deals, payouts, fileUrl } = useDeals();
   const portfolioDeals = getInvestedDeals(deals);
   const { currency, rates } = currencyState;
   const scrollRef = React.useRef<HTMLDivElement>(null);
@@ -428,6 +429,7 @@ const ProjectsCards = ({ forecastConfig, onSelectProject, currencyState }: {
               const projectedIncome = getProjectedIncome(project, forecastConfig);
               const capital = getDealCapital(project);
               const projectedPercent = capital ? (projectedIncome / capital) * 100 : 0;
+              const dealReturns = computeDealReturns(project, payouts.filter(p => p.deal === project.id));
               const paybackYears = getPaybackYears(project);
               const progress = getStageProgress(String(project.status));
               const image = project.images?.length
@@ -476,8 +478,20 @@ const ProjectsCards = ({ forecastConfig, onSelectProject, currencyState }: {
                       </span>
 
                       <span className="text-slate-400">Доходность (IRR)</span>
-                      <span className={`text-right font-bold ${projectedPercent < 0 ? 'text-rose-400' : 'text-slate-200'}`}>
-                        {projectedPercent !== 0 ? `${projectedPercent.toFixed(1)}%` : parsePercent(project.targetIrr) > 0 ? `${project.targetIrr}%` : '0.0%'}
+                      {dealReturns.xirr !== null ? (
+                        <span className={`text-right font-bold ${dealReturns.xirr < 0 ? 'text-rose-400' : 'text-[#10b981]'}`}>
+                          {(dealReturns.xirr * 100).toFixed(1)}%
+                        </span>
+                      ) : (
+                        <span className={`text-right font-bold ${projectedPercent < 0 ? 'text-rose-400' : 'text-slate-400'}`} title="Прогноз: нет даты входа для расчёта реального IRR">
+                          {projectedPercent !== 0 ? `${projectedPercent.toFixed(1)}%` : parsePercent(project.targetIrr) > 0 ? `${project.targetIrr}%` : '0.0%'}
+                          <span className="text-[8px] text-slate-500 font-normal"> прогноз</span>
+                        </span>
+                      )}
+
+                      <span className="text-slate-400">MOIC</span>
+                      <span className="text-right font-bold text-slate-200 font-mono">
+                        {dealReturns.moic !== null ? formatMoic(dealReturns.moic) : '—'}
                       </span>
                     </div>
 

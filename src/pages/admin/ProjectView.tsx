@@ -22,7 +22,8 @@ import {
 } from 'lucide-react';
 import { Deal, Payout, PayoutKind, useDeals } from '../../context/DealContext';
 import { statusColor } from '../../utils/dealDisplay';
-import { money } from '../../utils/format';
+import { money, formatMoic } from '../../utils/format';
+import { computeDealReturns } from '../../utils/returns';
 import { DealImageGallery } from '../../components/DealImageGallery';
 
 const FORMAT_LABELS: Record<string, string> = {
@@ -89,6 +90,7 @@ export default function ProjectView() {
   }
 
   const metrics = deal.metrics;
+  const dealReturns = computeDealReturns(deal, payouts.filter(p => p.deal === deal.id));
   const tenants = deal.rent?.tenants || [];
   const history = buildHistory(deal);
   const statusLabel = String(deal.status || '—');
@@ -151,6 +153,13 @@ export default function ProjectView() {
             <HeroMetric label="Чистый поток (NOI)" value={money(metrics?.noi)} accent negative={(metrics?.noi ?? 0) < 0} />
             <HeroMetric label="Денежный поток / мес" value={money(metrics?.cashFlow)} accent negative={(metrics?.cashFlow ?? 0) < 0} />
             <HeroMetric label="ROE" value={metrics?.roe ? `${metrics.roe.toFixed(1)}%` : '—'} accent negative={(metrics?.roe ?? 0) < 0} />
+            <HeroMetric label="MOIC" value={dealReturns.moic !== null ? formatMoic(dealReturns.moic) : '—'} />
+            <HeroMetric
+              label="IRR (XIRR)"
+              value={dealReturns.xirr !== null ? `${(dealReturns.xirr * 100).toFixed(1)}%` : '—'}
+              accent={dealReturns.xirr !== null}
+              negative={(dealReturns.xirr ?? 0) < 0}
+            />
             <HeroMetric
               label="Окупаемость"
               value={metrics && typeof metrics.paybackYears === 'number' ? `${metrics.paybackYears.toFixed(1)} лет` : '—'}

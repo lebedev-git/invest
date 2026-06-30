@@ -1,9 +1,10 @@
 import { motion } from 'motion/react';
-import { Wallet, TrendingUp, Target, Download } from 'lucide-react';
+import { Wallet, TrendingUp, Target, Coins } from 'lucide-react';
 import { Deal, useDeals } from '../../context/DealContext';
 import { cleanLabel } from '../../utils/dealDisplay';
 import { getDealCapital, getNetAnnualFlow, getPaybackYears } from '../../utils/dealMetrics';
-import { formatRub, formatMln, formatSignedRub } from '../../utils/format';
+import { formatRub, formatMln, formatSignedRub, formatMoic } from '../../utils/format';
+import { computePortfolioReturns } from '../../utils/returns';
 import { getInvestedDeals } from './helpers';
 
 // Палитра для диаграмм (hex — нужен для SVG-обводки и легенды).
@@ -23,15 +24,29 @@ const buildBreakdown = (deals: Deal[], keyFn: (deal: Deal) => string, total: num
     .sort((a, b) => b.amount - a.amount);
 
 export const AnalyticsPage = () => {
-  const { deals } = useDeals();
+  const { deals, payouts } = useDeals();
   const portfolioDeals = getInvestedDeals(deals);
 
   // Базовые агрегаты портфеля.
   const totalInvested = portfolioDeals.reduce((sum, deal) => sum + getDealCapital(deal), 0);
   const totalPaid = portfolioDeals.reduce((sum, deal) => sum + (deal.paidOut || 0), 0);
   const totalAnnualFlow = portfolioDeals.reduce((sum, deal) => sum + getNetAnnualFlow(deal), 0);
-  const portfolioRoe = totalInvested > 0 ? (totalAnnualFlow / totalInvested) * 100 : 0;
   const returnPct = totalInvested > 0 ? (totalPaid / totalInvested) * 100 : 0;
+
+  // Честная доходность на собственные средства (XIRR/MOIC по реальным выплатам).
+  const portfolioReturns = computePortfolioReturns(portfolioDeals, payouts);
+
+  // Кумулятивные выплаты во времени (для графика динамики).
+  const cumulativePayouts = (() => {
+    const sorted = payouts
+      .filter(p => !Number.isNaN(new Date(p.date).getTime()))
+      .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
+    let acc = 0;
+    return sorted.map(p => {
+      acc += Number(p.amount) || 0;
+      return { t: new Date(p.date).getTime(), y: acc };
+    });
+  })();
 
   // Показатели по каждому объекту.
   const objectRows = portfolioDeals.map(deal => {
@@ -66,8 +81,8 @@ export const AnalyticsPage = () => {
   const kpis = [
     { icon: Wallet, label: 'Капитал в работе', value: totalInvested ? formatMln(totalInvested) : '—', accent: 'text-slate-100', sub: `${portfolioDeals.length} объект(ов) в портфеле` },
     { icon: TrendingUp, label: 'Чистый поток / год', value: totalAnnualFlow ? formatSignedRub(totalAnnualFlow) : '—', accent: totalAnnualFlow < 0 ? 'text-rose-400' : 'text-[#10b981]', sub: `${profitableCount} из ${portfolioDeals.length} прибыльны` },
-    { icon: Target, label: 'Доходность (ROE)', value: `${portfolioRoe.toFixed(1)}%`, accent: portfolioRoe < 0 ? 'text-rose-400' : 'text-[#10b981]', sub: 'на вложенный капитал' },
-    { icon: Download, label: 'Возврат капитала', value: `${returnPct.toFixed(0)}%`, accent: 'text-slate-100', sub: `выплачено ${formatRub(totalPaid)}` },
+    { icon: Target, label: 'IRR (XIRR)', value: portfolioReturns.xirr !== null ? `${(portfolioReturns.xirr * 100).toFixed(1)}%` : '—', accent: (portfolioReturns.xirr ?? 0) < 0 ? 'text-rose-400' : 'text-[#10b981]', sub: 'реальный IRR по выплатам' },
+    { icon: Coins, label: 'MOIC', value: portfolioReturns.moic !== null ? formatMoic(portfolioReturns.moic) : '—', accent: 'text-slate-100', sub: 'выплаты + стоимость / вложено' },
   ];
 
   // Геометрия пончиковой диаграммы.
@@ -270,6 +285,47 @@ export const AnalyticsPage = () => {
                 ))}
               </div>
             </div>
+          </div>
+
+          {/* Динамика выплат во времени */}
+          <div className="card p-6 flex flex-col gap-4">
+            <div className="flex items-center justify-between gap-3">
+              <h3 className="text-base font-bold text-slate-100 uppercase tracking-tight">Динамика выплат</h3>
+              <span className="text-sm font-black text-[#10b981] tabular-nums">{formatRub(totalPaid)}</span>
+            </div>
+            {cumulativePayouts.length ? (() => {
+              const W = 320, H = 140, padL = 10, padR = 10, padT = 14, padB = 10;
+              const nowMs = Date.now();
+              const first = cumulativePayouts[0].t;
+              const last = cumulativePayouts[cumulativePayouts.length - 1].t;
+              const tEnd = Math.max(nowMs, last);
+              const span = Math.max(1, tEnd - first);
+              const yMax = cumulativePayouts[cumulativePayouts.length - 1].y || 1;
+              const sx = (t: number) => padL + ((t - first) / span) * (W - padL - padR);
+              const sy = (y: number) => (H - padB) - (y / yMax) * (H - padT - padB);
+              const pts: number[][] = [[sx(first), sy(0)], ...cumulativePayouts.map(p => [sx(p.t), sy(p.y)]), [sx(tEnd), sy(yMax)]];
+              const line = pts.map(p => p.join(',')).join(' ');
+              const area = `M ${pts.map(p => p.join(',')).join(' L ')} L ${sx(tEnd)},${sy(0)} Z`;
+              return (
+                <div className="flex flex-col gap-2">
+                  <svg viewBox="0 0 320 140" className="w-full h-40" preserveAspectRatio="none">
+                    <line x1={padL} y1={sy(0)} x2={W - padR} y2={sy(0)} stroke="currentColor" className="text-surface-2" strokeWidth="1" vectorEffect="non-scaling-stroke" />
+                    <path d={area} fill="#10b981" fillOpacity="0.12" />
+                    <polyline points={line} fill="none" stroke="#10b981" strokeWidth="2" strokeLinejoin="round" strokeLinecap="round" vectorEffect="non-scaling-stroke" />
+                    {cumulativePayouts.map((p, i) => (
+                      <circle key={i} cx={sx(p.t)} cy={sy(p.y)} r="2.5" fill="#10b981" />
+                    ))}
+                  </svg>
+                  <div className="flex justify-between text-[9px] text-slate-500 font-bold uppercase tracking-wider">
+                    <span>{new Date(first).toLocaleDateString('ru-RU', { month: 'short', year: '2-digit' })}</span>
+                    <span>сегодня</span>
+                  </div>
+                  <p className="text-[10px] text-slate-500 font-medium">Накопленные фактические выплаты по портфелю. Возвращено {returnPct.toFixed(1)}% вложенного капитала.</p>
+                </div>
+              );
+            })() : (
+              <div className="py-12 text-center text-xs text-slate-500 font-medium">Выплат пока не было — график появится после первой выплаты.</div>
+            )}
           </div>
         </>
       )}

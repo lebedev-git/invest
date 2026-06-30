@@ -33,3 +33,6 @@ export const formatNumberString = (val: string | number): string => {
 
 // Обратное преобразование: убрать разделители тысяч.
 export const parseNumberString = (val: string): string => val.replace(/\s/g, '');
+
+// Множитель на капитал (MOIC/TVPI), напр. «1.40×».
+export const formatMoic = (value: number): string => `${value.toFixed(2)}×`;
