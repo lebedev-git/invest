@@ -1,25 +1,25 @@
-import React, { useState, useEffect, useMemo, useRef } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { motion } from 'motion/react';
-import { 
-  ArrowLeft, 
-  Save, 
-  Briefcase, 
-  Key, 
-  Users, 
-  Building2, 
-  Landmark, 
-  Coins, 
-  Percent, 
-  Clock, 
-  AlertTriangle, 
-  Trash2, 
-  Plus, 
+import {
+  ArrowLeft,
+  Save,
+  Briefcase,
+  Key,
+  Users,
+  Building2,
+  Landmark,
+  Coins,
+  AlertTriangle,
+  Trash2,
+  Plus,
   Info,
-  ChevronDown
+  ChevronDown,
+  Image as ImageIcon
 } from 'lucide-react';
 import { useDeals, Deal } from '../../context/DealContext';
 import { calculateDealMetrics } from '../../utils/mathCore';
+import { formatNumberString, parseNumberString } from '../../utils/format';
+import { DealImageGallery } from '../../components/DealImageGallery';
 
 const FORMATS = [
   { id: 'full_ownership', label: 'Полная собственность', icon: Key, desc: '100% владение коммерческим объектом инвестором' },
@@ -32,23 +32,10 @@ const FORMATS = [
   { id: 'partner_syndicate', label: 'Партнёрская сделка / синдикат', icon: Users, desc: 'Совместное участие под управлением профессионального оператора' }
 ];
 
-const formatNumberString = (val: string | number) => {
-  if (val === undefined || val === null || val === '') return '';
-  const numStr = String(val).replace(/\s/g, '');
-  if (isNaN(Number(numStr))) return String(val);
-  const parts = numStr.split('.');
-  parts[0] = parts[0].replace(/\B(?=(\d{3})+(?!\d))/g, ' ');
-  return parts.join('.');
-};
-
-const parseNumberString = (val: string) => {
-  return val.replace(/\s/g, '');
-};
-
 export default function CreateDeal() {
   const { id } = useParams();
   const navigate = useNavigate();
-  const { deals, saveDeal } = useDeals();
+  const { deals, saveDeal, uploadDealFiles, removeDealFile, fileUrl } = useDeals();
 
   const isEdit = Boolean(id);
   const existingDeal = useMemo(() => deals.find(d => d.id === id), [deals, id]);
@@ -151,13 +138,61 @@ export default function CreateDeal() {
     currentMarketValue: ''
   });
 
-  // Scroll target refs
-  const block1Ref = useRef<HTMLDivElement>(null);
-  const block2Ref = useRef<HTMLDivElement>(null);
-  const block3Ref = useRef<HTMLDivElement>(null);
-
   // Validation States
   const [showValidation, setShowValidation] = useState(false);
+  const [saveError, setSaveError] = useState('');
+
+  // Фотографии объекта.
+  // В режиме редактирования файлы грузятся сразу на сервер (deal.id уже есть).
+  // В режиме создания — складываются локально (предпросмотр) и догружаются
+  // после того, как сделка создана и получен её id.
+  const [stagedImages, setStagedImages] = useState<Array<{ id: string; file: File; url: string }>>([]);
+  const [imageBusy, setImageBusy] = useState(false);
+  const [imageError, setImageError] = useState('');
+
+  // Освобождаем object-URL предпросмотров при размонтировании.
+  useEffect(() => () => { stagedImages.forEach(s => URL.revokeObjectURL(s.url)); }, []);
+
+  const handleImageFiles = async (files: File[]) => {
+    if (!files.length) return;
+    setImageError('');
+    if (isEdit && existingDeal) {
+      setImageBusy(true);
+      try {
+        await uploadDealFiles(existingDeal.id, 'images', files);
+      } catch {
+        setImageError('Не удалось загрузить изображения.');
+      } finally {
+        setImageBusy(false);
+      }
+    } else {
+      setStagedImages(prev => [
+        ...prev,
+        ...files.map(f => ({ id: `${f.name}-${f.size}-${Math.random()}`, file: f, url: URL.createObjectURL(f) })),
+      ]);
+    }
+  };
+
+  const removeStagedImage = (imgId: string) => {
+    setStagedImages(prev => {
+      const target = prev.find(s => s.id === imgId);
+      if (target) URL.revokeObjectURL(target.url);
+      return prev.filter(s => s.id !== imgId);
+    });
+  };
+
+  const removeExistingImage = async (filename: string) => {
+    if (!existingDeal) return;
+    setImageBusy(true);
+    setImageError('');
+    try {
+      await removeDealFile(existingDeal.id, 'images', filename);
+    } catch {
+      setImageError('Не удалось удалить изображение.');
+    } finally {
+      setImageBusy(false);
+    }
+  };
 
   // Pre-fill form if editing
   useEffect(() => {
@@ -445,7 +480,7 @@ export default function CreateDeal() {
   }, [validationErrors]);
 
   // Submit deal saving
-  const handleSubmit = (isDraft = false) => {
+  const handleSubmit = async (isDraft = false) => {
     if (!isDraft && !canSave) {
       setShowValidation(true);
       setTimeout(() => {
@@ -525,13 +560,21 @@ export default function CreateDeal() {
       }
     };
 
-    saveDeal(dealPayload);
-    navigate('/deals');
-  };
-
-  const scrollToBlock = (ref: React.RefObject<HTMLDivElement | null>) => {
-    if (ref.current) {
-      ref.current.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    setSaveError('');
+    try {
+      const savedId = await saveDeal(dealPayload);
+      // Сделка создана — догружаем накопленные локально фото к её записи.
+      if (!isEdit && stagedImages.length) {
+        try {
+          await uploadDealFiles(savedId, 'images', stagedImages.map(s => s.file));
+        } catch {
+          // Сама сделка сохранена — не блокируем переход, но предупреждаем.
+          setSaveError('Сделка сохранена, но часть фотографий не удалось загрузить. Добавьте их в карточке сделки.');
+        }
+      }
+      navigate('/deals');
+    } catch {
+      setSaveError('Не удалось сохранить сделку. Проверьте соединение и повторите.');
     }
   };
 
@@ -559,7 +602,7 @@ export default function CreateDeal() {
         <div className="space-y-8">
           
           {/* Block 1. Basic Info */}
-          <div ref={block1Ref} className="bg-surface border border-line rounded-3xl p-8 shadow-sm space-y-6">
+          <div className="bg-surface border border-line rounded-3xl p-8 shadow-sm space-y-6">
             <h2 className="text-sm font-black uppercase tracking-widest text-slate-100 border-b border-line pb-4 flex items-center gap-2">
               <span className="w-5 h-5 rounded-full bg-emerald-500/10 text-emerald-600 flex items-center justify-center font-black text-xs font-mono">1</span>
               Основная информация об активе
@@ -721,10 +764,29 @@ export default function CreateDeal() {
                 </div>
               )}
             </div>
+            {/* Фотографии объекта */}
+            <div className="border-t border-line pt-4 space-y-4">
+              <div className="flex items-center gap-2 text-[10px] font-black uppercase tracking-widest text-slate-400">
+                <ImageIcon size={16} /> Фотографии объекта
+              </div>
+
+              <DealImageGallery
+                serverImages={isEdit ? (existingDeal?.images || []) : []}
+                resolveUrl={existingDeal ? (name => fileUrl(existingDeal.id, name, '400x300')) : undefined}
+                onRemoveServer={isEdit ? removeExistingImage : undefined}
+                staged={isEdit ? [] : stagedImages.map(s => ({ id: s.id, url: s.url, name: s.file.name }))}
+                onRemoveStaged={isEdit ? undefined : removeStagedImage}
+                onAddFiles={handleImageFiles}
+                busy={imageBusy}
+                error={imageError}
+                emptyText="Добавьте фотографии объекта — они появятся в карточке сделки и в портфеле инвестора."
+                hint={!isEdit && stagedImages.length > 0 ? 'Фотографии загрузятся автоматически после сохранения сделки.' : undefined}
+              />
+            </div>
           </div>
 
           {/* Block 2. Format of Participation */}
-          <div ref={block2Ref} className="bg-surface border border-line rounded-3xl p-8 shadow-sm space-y-6">
+          <div className="bg-surface border border-line rounded-3xl p-8 shadow-sm space-y-6">
             <h2 className="text-sm font-black uppercase tracking-widest text-slate-100 border-b border-line pb-4 flex items-center gap-2">
               <span className="w-5 h-5 rounded-full bg-emerald-500/10 text-emerald-600 flex items-center justify-center font-black text-xs font-mono">2</span>
               Формат участия
@@ -1106,7 +1168,7 @@ export default function CreateDeal() {
           </div>
 
           {/* Block 3. Financial Parameters */}
-          <div ref={block3Ref} className="bg-surface border border-line rounded-3xl p-8 shadow-sm space-y-8">
+          <div className="bg-surface border border-line rounded-3xl p-8 shadow-sm space-y-8">
             <h2 className="text-sm font-black uppercase tracking-widest text-slate-100 border-b border-line pb-4 flex items-center gap-2">
               <span className="w-5 h-5 rounded-full bg-emerald-500/10 text-emerald-600 flex items-center justify-center font-black text-xs font-mono">3</span>
               Финансовые параметры
@@ -1650,6 +1712,12 @@ export default function CreateDeal() {
           </div>
         </div>
       </div>
+
+      {saveError && (
+        <div className="flex items-center gap-2 p-4 bg-rose-500/10 border border-rose-500/20 rounded-xl text-rose-500 text-xs font-bold">
+          <AlertTriangle size={16} /> {saveError}
+        </div>
+      )}
 
       {/* Панель действий в потоке (не плавающая) */}
       <div className="bg-surface border border-line rounded-2xl p-4 flex justify-between items-center shadow-sm">

@@ -221,7 +221,7 @@ interface DealContextType {
   deals: Deal[];
   loading: boolean;
   error: string | null;
-  saveDeal: (deal: Deal) => Promise<void>;
+  saveDeal: (deal: Deal) => Promise<string>;
   deleteDeal: (id: string) => Promise<void>;
   reload: () => Promise<void>;
   // Выплаты по сделкам.
@@ -296,13 +296,17 @@ export function DealProvider({ children }: { children: React.ReactNode }) {
     loadDeals();
   }, [isAuthenticated, loadDeals]);
 
-  const saveDeal = useCallback(async (deal: Deal) => {
+  // Возвращает id сохранённой записи — нужно вызывающему коду, чтобы догрузить
+  // файлы (фото/документы) к только что созданной сделке.
+  const saveDeal = useCallback(async (deal: Deal): Promise<string> => {
     const recalculated = recalculateDeal(deal);
     const body = dealToBody(recalculated);
     const existing = deals.find(d => d.id === recalculated.id);
     try {
+      let savedId: string;
       if (existing) {
         const saved: any = await pb.collection('deals').update(existing.id, body);
+        savedId = saved.id;
         if (String(existing.status) !== String(recalculated.status)) {
           await pb.collection('status_history').create({
             deal: saved.id,
@@ -315,6 +319,7 @@ export function DealProvider({ children }: { children: React.ReactNode }) {
           ...body,
           created_by: pb.authStore.record?.id,
         });
+        savedId = saved.id;
         await pb.collection('status_history').create({
           deal: saved.id,
           status: String(recalculated.status),
@@ -322,6 +327,7 @@ export function DealProvider({ children }: { children: React.ReactNode }) {
         });
       }
       await loadDeals();
+      return savedId;
     } catch (e) {
       console.error('Не удалось сохранить сделку', e);
       throw e;

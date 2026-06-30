@@ -2,15 +2,11 @@ import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'motion/react';
 import { Edit2, Eye, Plus, Trash2 } from 'lucide-react';
-import { Deal, DealInvestor, useDeals } from '../../context/DealContext';
+import { Deal, useDeals } from '../../context/DealContext';
 import { cleanLabel } from '../../utils/dealDisplay';
 import { getInvestorsTotal, getAnnualRent, getPaybackYears } from '../../utils/dealMetrics';
+import { money } from '../../utils/format';
 import { LoadingState, ErrorState } from '../../components/AsyncState';
-
-const money = (value?: number | string) => {
-  const amount = Number(value) || 0;
-  return amount > 0 ? `${Math.round(amount).toLocaleString('ru-RU')} ₽` : '—';
-};
 
 const label = (value?: string) => cleanLabel(value, '—');
 

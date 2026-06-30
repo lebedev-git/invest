@@ -84,8 +84,6 @@ export function calculateDealMetrics(deal: any): DealMetrics {
   let noi = 0;
   let taxes = 0;
   let cashFlow = 0;
-  let adjustedRentalFlow = 0;
-  let adjustedOpex = 0;
 
   if (isFinancialOnly) {
     // Financial asset calculation
@@ -122,8 +120,6 @@ export function calculateDealMetrics(deal: any): DealMetrics {
     const wholeCashFlow = wholeNoi - monthlyPayment;
 
     // Distribute the object-level flow to the participant's share
-    adjustedRentalFlow = totalRentalFlow * shareRatio;
-    adjustedOpex = totalOpex * shareRatio;
     taxes = wholeTaxes * shareRatio;
     noi = wholeNoi * shareRatio;
     cashFlow = wholeCashFlow * shareRatio;

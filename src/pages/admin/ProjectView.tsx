@@ -22,11 +22,8 @@ import {
 } from 'lucide-react';
 import { Deal, Payout, PayoutKind, useDeals } from '../../context/DealContext';
 import { statusColor } from '../../utils/dealDisplay';
-
-const money = (value?: number | string) => {
-  const amount = Number(value) || 0;
-  return amount !== 0 ? `${Math.round(amount).toLocaleString('ru-RU')} ₽` : '—';
-};
+import { money } from '../../utils/format';
+import { DealImageGallery } from '../../components/DealImageGallery';
 
 const FORMAT_LABELS: Record<string, string> = {
   full_ownership: 'Полная собственность',
@@ -338,24 +335,20 @@ interface FileCardProps {
   onRemove: (filename: string) => Promise<void>;
 }
 
-// Галерея изображений объекта с загрузкой/удалением.
+// Галерея изображений объекта на странице сделки (только серверные файлы).
 function ImagesCard({ deal, fileUrl, onUpload, onRemove }: FileCardProps) {
-  const inputRef = useRef<HTMLInputElement>(null);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
-  const images = deal.images || [];
 
-  const handleFiles = async (files: FileList | null) => {
-    if (!files || !files.length) return;
+  const handleAdd = async (files: File[]) => {
     setError('');
     setBusy(true);
     try {
-      await onUpload(Array.from(files));
+      await onUpload(files);
     } catch {
       setError('Не удалось загрузить изображения.');
     } finally {
       setBusy(false);
-      if (inputRef.current) inputRef.current.value = '';
     }
   };
 
@@ -372,35 +365,15 @@ function ImagesCard({ deal, fileUrl, onUpload, onRemove }: FileCardProps) {
 
   return (
     <Card icon={ImageIcon} title="Фотографии объекта">
-      {images.length > 0 ? (
-        <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 mb-4">
-          {images.map(name => (
-            <div key={name} className="relative group rounded-2xl overflow-hidden border border-line aspect-[4/3] bg-surface-2">
-              <img src={fileUrl(deal.id, name, '400x300')} alt={deal.name} className="w-full h-full object-cover" />
-              <button
-                onClick={() => handleRemove(name)}
-                disabled={busy}
-                title="Удалить"
-                className="absolute top-1.5 right-1.5 w-7 h-7 rounded-lg bg-black/60 text-white flex items-center justify-center opacity-0 group-hover:opacity-100 hover:bg-rose-600 transition-all"
-              >
-                <Trash2 size={14} />
-              </button>
-            </div>
-          ))}
-        </div>
-      ) : (
-        <EmptyState text="Фотографий пока нет. Загрузите изображения объекта — они появятся в портфеле инвестора." />
-      )}
-
-      <input ref={inputRef} type="file" accept="image/*" multiple hidden onChange={e => handleFiles(e.target.files)} />
-      <button
-        onClick={() => inputRef.current?.click()}
-        disabled={busy}
-        className="w-full mt-1 py-3 rounded-xl bg-surface-2 border border-line text-[10px] font-black uppercase tracking-widest text-slate-300 hover:text-white hover:border-emerald-500/40 transition-all flex items-center justify-center gap-2 disabled:opacity-60"
-      >
-        {busy ? <Loader2 size={14} className="animate-spin" /> : <Upload size={14} />} Загрузить фото
-      </button>
-      {error && <p className="text-[11px] text-rose-400 font-bold mt-2 text-center">{error}</p>}
+      <DealImageGallery
+        serverImages={deal.images || []}
+        resolveUrl={name => fileUrl(deal.id, name, '400x300')}
+        onRemoveServer={handleRemove}
+        onAddFiles={handleAdd}
+        busy={busy}
+        error={error}
+        emptyText="Фотографий пока нет. Загрузите изображения объекта — они появятся в портфеле инвестора."
+      />
     </Card>
   );
 }
