@@ -54,7 +54,7 @@ import {
 import { formatRub, formatMln, formatSignedRub } from '../utils/format';
 
 import {
-  getProjectImage,
+  PROJECT_IMAGE_PLACEHOLDER,
   getStatusBadgeStyle,
   getProgressBarColor,
   ALLOCATION_STYLES,
@@ -432,7 +432,7 @@ const ProjectsCards = ({ forecastConfig, onSelectProject, currencyState }: {
               const progress = getStageProgress(String(project.status));
               const image = project.images?.length
                 ? fileUrl(project.id, project.images[0], '400x300')
-                : getProjectImage(project.name);
+                : PROJECT_IMAGE_PLACEHOLDER;
               const badgeStyle = getStatusBadgeStyle(project.status);
               const progressBarColor = getProgressBarColor(progress);
 

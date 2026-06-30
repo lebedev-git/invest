@@ -1,7 +1,5 @@
-import React from 'react';
 import { Navigate, Outlet, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import { UserRole } from '../lib/pb';
 import { X7Logo } from './X7Logo';
 
 const FullScreenLoader = () => (
@@ -13,14 +11,14 @@ const FullScreenLoader = () => (
   </div>
 );
 
-// Гвард маршрутов: требует авторизацию; при указании role — ещё и совпадение роли.
-export default function RoleGuard({ role }: { role?: UserRole }) {
-  const { isAuthenticated, role: userRole, loading } = useAuth();
+// Гвард маршрутов: требует авторизацию. Приложение работает в режиме «одна сущность»
+// (личный портфель владельца), поэтому ролевого разграничения доступа нет.
+export default function RoleGuard() {
+  const { isAuthenticated, loading } = useAuth();
   const location = useLocation();
 
   if (loading) return <FullScreenLoader />;
   if (!isAuthenticated) return <Navigate to="/login" replace state={{ from: location }} />;
-  if (role && userRole !== role) return <Navigate to="/" replace />;
 
   return <Outlet />;
 }

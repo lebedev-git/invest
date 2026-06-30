@@ -4,23 +4,11 @@ import { cleanLabel } from '../../utils/dealDisplay';
 import { getDealCapital, getNetAnnualFlow } from '../../utils/dealMetrics';
 import { formatRub } from '../../utils/format';
 
-// Фотографии коммерческих объектов с Unsplash — fallback, если у сделки нет своих фото.
-export const getProjectImage = (name: string) => {
-  const lower = name.toLowerCase();
-  if (lower.includes('пятерочка') || lower.includes('pyaterochka')) {
-    return 'https://images.unsplash.com/photo-1601584115197-04ecc0da31d7?auto=format&fit=crop&w=400&q=80'; // супермаркет
-  }
-  if (lower.includes('октябрь') || lower.includes('retail')) {
-    return 'https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?auto=format&fit=crop&w=400&q=80'; // стрит-ритейл
-  }
-  if (lower.includes('восток') || lower.includes('storage') || lower.includes('склад')) {
-    return 'https://images.unsplash.com/photo-1586528116311-ad8dd3c8310d?auto=format&fit=crop&w=400&q=80'; // склад
-  }
-  if (lower.includes('loft') || lower.includes('yard') || lower.includes('редевелопмент')) {
-    return 'https://images.unsplash.com/photo-1577495508048-b635879837f1?auto=format&fit=crop&w=400&q=80'; // лофт
-  }
-  return 'https://images.unsplash.com/photo-1564013799919-ab600027ffc6?auto=format&fit=crop&w=400&q=80'; // дефолт
-};
+// Нейтральный плейсхолдер для карточек без загруженного фото (без внешних зависимостей).
+// Раньше здесь были захардкоженные Unsplash-картинки — заменены на локальный SVG,
+// так как у сделок появились собственные фотографии (deal.images).
+export const PROJECT_IMAGE_PLACEHOLDER =
+  "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='400' height='300'%3E%3Crect width='400' height='300' fill='%231e293b'/%3E%3Cg fill='none' stroke='%23475569' stroke-width='3'%3E%3Crect x='150' y='120' width='100' height='90'/%3E%3Cline x1='150' y1='210' x2='250' y2='210'/%3E%3Cline x1='170' y1='140' x2='185' y2='140'/%3E%3Cline x1='215' y1='140' x2='230' y2='140'/%3E%3Cline x1='170' y1='165' x2='185' y2='165'/%3E%3Cline x1='215' y1='165' x2='230' y2='165'/%3E%3C/g%3E%3C/svg%3E";
 
 // Цвета бейджей статусов в соответствии с макетом
 export const getStatusBadgeStyle = (status: string) => {
