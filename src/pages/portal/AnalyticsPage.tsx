@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { motion } from 'motion/react';
 import { Wallet, TrendingUp, Target, Coins } from 'lucide-react';
 import { Deal, useDeals } from '../../context/DealContext';
@@ -23,9 +24,23 @@ const buildBreakdown = (deals: Deal[], keyFn: (deal: Deal) => string, total: num
     .map(item => ({ ...item, percent: total > 0 ? (item.amount / total) * 100 : 0 }))
     .sort((a, b) => b.amount - a.amount);
 
+// Сколько строк показывать в списках объектов до раскрытия «Показать все».
+const OBJECT_LIST_LIMIT = 8;
+// Кнопка-переключатель раскрытия длинных списков (единый стиль с «Все выплаты»).
+const ExpandToggle = ({ expanded, hidden, onClick }: { expanded: boolean; hidden: number; onClick: () => void }) => (
+  <button
+    onClick={onClick}
+    className="mt-1 py-2.5 rounded-xl bg-surface-2 border border-line text-[10px] font-black uppercase tracking-widest text-slate-400 hover:bg-surface-2/80 hover:text-slate-100 transition-all flex items-center justify-center cursor-pointer"
+  >
+    {expanded ? 'Свернуть' : `Показать все (+${hidden})`}
+  </button>
+);
+
 export const AnalyticsPage = () => {
   const { deals, payouts } = useDeals();
   const portfolioDeals = getInvestedDeals(deals);
+  const [showAllFlows, setShowAllFlows] = useState(false);
+  const [showAllPayback, setShowAllPayback] = useState(false);
 
   // Базовые агрегаты портфеля.
   const totalInvested = portfolioDeals.reduce((sum, deal) => sum + getDealCapital(deal), 0);
@@ -36,10 +51,10 @@ export const AnalyticsPage = () => {
   // Честная доходность на собственные средства (XIRR/MOIC по реальным выплатам).
   const portfolioReturns = computePortfolioReturns(portfolioDeals, payouts);
 
-  // Кумулятивные выплаты во времени (для графика динамики).
+  // Кумулятивные выплаты во времени (для графика динамики) — только фактические.
   const cumulativePayouts = (() => {
     const sorted = payouts
-      .filter(p => !Number.isNaN(new Date(p.date).getTime()))
+      .filter(p => p.status !== 'planned' && !Number.isNaN(new Date(p.date).getTime()))
       .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
     let acc = 0;
     return sorted.map(p => {
@@ -76,7 +91,21 @@ export const AnalyticsPage = () => {
 
   // Структура портфеля по типам и по городам.
   const byType = buildBreakdown(portfolioDeals, deal => cleanLabel(deal.type), totalInvested);
-  const byCity = buildBreakdown(portfolioDeals, deal => cleanLabel(deal.city) || 'Не указан', totalInvested);
+  const byCityFull = buildBreakdown(portfolioDeals, deal => cleanLabel(deal.city) || 'Не указан', totalInvested);
+  // География: топ-6 городов + агрегат «Прочие», чтобы список не разрастался.
+  const byCity = byCityFull.length > 6
+    ? [
+        ...byCityFull.slice(0, 6),
+        byCityFull.slice(6).reduce(
+          (acc, item) => ({ label: 'Прочие', amount: acc.amount + item.amount, percent: acc.percent + item.percent }),
+          { label: 'Прочие', amount: 0, percent: 0 },
+        ),
+      ]
+    : byCityFull;
+
+  // Списки объектов с учётом лимита показа.
+  const visibleFlows = showAllFlows ? flowsSorted : flowsSorted.slice(0, OBJECT_LIST_LIMIT);
+  const visiblePayback = showAllPayback ? paybackRows : paybackRows.slice(0, OBJECT_LIST_LIMIT);
 
   const kpis = [
     { icon: Wallet, label: 'Капитал в работе', value: totalInvested ? formatMln(totalInvested) : '—', accent: 'text-slate-100', sub: `${portfolioDeals.length} объект(ов) в портфеле` },
@@ -137,7 +166,7 @@ export const AnalyticsPage = () => {
               </div>
               {maxAbsFlow > 0 ? (
                 <div className="flex flex-col gap-3">
-                  {flowsSorted.map(row => {
+                  {visibleFlows.map(row => {
                     const positive = row.netAnnual >= 0;
                     const width = Math.max(2, (Math.abs(row.netAnnual) / maxAbsFlow) * 100);
                     return (
@@ -159,6 +188,9 @@ export const AnalyticsPage = () => {
                       </div>
                     );
                   })}
+                  {flowsSorted.length > OBJECT_LIST_LIMIT && (
+                    <ExpandToggle expanded={showAllFlows} hidden={flowsSorted.length - OBJECT_LIST_LIMIT} onClick={() => setShowAllFlows(v => !v)} />
+                  )}
                 </div>
               ) : (
                 <div className="py-12 text-center text-xs text-slate-500 font-medium">Нет рассчитанного денежного потока по объектам.</div>
@@ -225,7 +257,7 @@ export const AnalyticsPage = () => {
               </div>
               {paybackRows.length ? (
                 <div className="flex flex-col gap-3">
-                  {paybackRows.map(row => {
+                  {visiblePayback.map(row => {
                     const years = row.payback as number;
                     const width = maxPayback > 0 ? Math.max(4, (years / maxPayback) * 100) : 0;
                     const color = years <= 7 ? 'bg-[#10b981]' : years <= 12 ? 'bg-[#f59e0b]' : 'bg-rose-500';
@@ -242,6 +274,9 @@ export const AnalyticsPage = () => {
                       </div>
                     );
                   })}
+                  {paybackRows.length > OBJECT_LIST_LIMIT && (
+                    <ExpandToggle expanded={showAllPayback} hidden={paybackRows.length - OBJECT_LIST_LIMIT} onClick={() => setShowAllPayback(v => !v)} />
+                  )}
                   <p className="text-[10px] text-slate-500 font-medium pt-1">Короче полоса — быстрее окупаемость. Зелёный ≤ 7 лет, жёлтый ≤ 12, красный — дольше.</p>
                 </div>
               ) : (

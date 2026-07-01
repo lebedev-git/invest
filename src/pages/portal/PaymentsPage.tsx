@@ -6,9 +6,11 @@ import { PAYOUT_KIND_LABEL } from './helpers';
 export const PaymentsPage = () => {
   const { deals, payouts } = useDeals();
   const dealName = (id: string) => deals.find(d => d.id === id)?.name || '—';
-  // Реальные выплаты из коллекции payouts, новые сверху.
-  const rows = [...payouts].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+  // Фактические выплаты — новые сверху; плановые — ближайшие сверху (график).
+  const rows = payouts.filter(p => p.status === 'paid').sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+  const planned = payouts.filter(p => p.status === 'planned').sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
   const total = rows.reduce((sum, p) => sum + p.amount, 0);
+  const plannedTotal = planned.reduce((sum, p) => sum + p.amount, 0);
 
   return (
     <motion.div
@@ -20,6 +22,37 @@ export const PaymentsPage = () => {
         <h2 className="text-3xl font-bold text-slate-100 tracking-tight">История выплат</h2>
         <p className="text-slate-500 font-medium">Реестр фактических выплат по вашим объектам</p>
       </div>
+
+      {planned.length > 0 && (
+        <div className="card overflow-hidden">
+          <div className="p-6 border-b border-line flex justify-between items-center bg-surface-2/30">
+            <h3 className="text-base font-bold text-slate-100 uppercase tracking-tight">Ожидается по графику</h3>
+            <span className="text-xs font-bold text-amber-500 bg-amber-500/10 px-2.5 py-1 rounded-lg border border-amber-500/20">План: {formatRub(plannedTotal)}</span>
+          </div>
+          <div className="overflow-x-auto">
+            <table className="w-full text-left border-collapse">
+              <thead>
+                <tr className="border-b border-line text-[10px] font-black uppercase text-slate-500 tracking-wider bg-surface-2/10">
+                  <th className="p-4 pl-6">Дата</th>
+                  <th className="p-4">Объект</th>
+                  <th className="p-4">Тип</th>
+                  <th className="p-4 text-right">Сумма</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-line text-sm">
+                {planned.map(row => (
+                  <tr key={row.id} className="hover:bg-surface-2 transition-colors">
+                    <td className="p-4 pl-6 font-mono text-slate-400">{new Date(row.date).toLocaleDateString('ru-RU')}</td>
+                    <td className="p-4 font-bold text-slate-200">{dealName(row.deal)}</td>
+                    <td className="p-4 text-slate-400">{PAYOUT_KIND_LABEL[row.kind] || 'Прочее'}{row.comment ? ` · ${row.comment}` : ''}</td>
+                    <td className="p-4 text-right font-bold text-amber-500 font-mono">{Math.round(row.amount).toLocaleString('ru-RU')} ₽</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      )}
 
       <div className="card overflow-hidden">
         <div className="p-6 border-b border-line flex justify-between items-center bg-surface-2/30">

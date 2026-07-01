@@ -43,12 +43,17 @@ export interface DealInvestor {
 
 export type PayoutKind = 'dividend' | 'return' | 'other';
 
+// Статус выплаты: 'paid' — фактически выплачено (учитывается в суммах и доходности),
+// 'planned' — плановая выплата графика (только для прогнозного календаря).
+export type PayoutStatus = 'planned' | 'paid';
+
 export interface Payout {
   id: string;
   deal: string;
   date: string;
   amount: number;
   kind: PayoutKind;
+  status: PayoutStatus;
   comment?: string;
 }
 
@@ -268,10 +273,14 @@ export function DealProvider({ children }: { children: React.ReactNode }) {
       }
 
       // Сумма фактических выплат по каждой сделке → реальный paidOut.
+      // Плановые выплаты (status='planned') в сумму не входят — только факт.
       const paidByDeal: Record<string, number> = {};
       const payoutList: Payout[] = (payoutRecs as any[]).map(p => {
-        paidByDeal[p.deal] = (paidByDeal[p.deal] || 0) + (Number(p.amount) || 0);
-        return { id: p.id, deal: p.deal, date: p.date, amount: Number(p.amount) || 0, kind: p.kind || 'other', comment: p.comment };
+        const status: PayoutStatus = p.status === 'planned' ? 'planned' : 'paid';
+        if (status === 'paid') {
+          paidByDeal[p.deal] = (paidByDeal[p.deal] || 0) + (Number(p.amount) || 0);
+        }
+        return { id: p.id, deal: p.deal, date: p.date, amount: Number(p.amount) || 0, kind: p.kind || 'other', status, comment: p.comment };
       });
       setPayouts(payoutList);
 

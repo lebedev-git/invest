@@ -95,7 +95,9 @@ export const xirr = (flows: CashFlow[], guess = 0.1): number | null => {
 };
 
 // Показатели возврата по одной сделке. now передаётся явно (тестируемость/детерминизм).
-export const computeDealReturns = (deal: Deal, dealPayouts: Payout[], now: Date = new Date()): ReturnsResult => {
+export const computeDealReturns = (deal: Deal, rawPayouts: Payout[], now: Date = new Date()): ReturnsResult => {
+  // Доходность считается только по фактическим выплатам; плановые (график) — не поток.
+  const dealPayouts = rawPayouts.filter(p => p.status !== 'planned');
   const equityInvested = getEquityInvested(deal);
   const distributed = dealPayouts.reduce((sum, p) => sum + (Number(p.amount) || 0), 0);
   const currentValue = getCurrentValue(deal, equityInvested);
@@ -120,8 +122,12 @@ export const computeDealReturns = (deal: Deal, dealPayouts: Payout[], now: Date 
 
 // Портфельные показатели: единый поток по всем сделкам для XIRR; MOIC/DPI — суммами.
 export const computePortfolioReturns = (deals: Deal[], payouts: Payout[], now: Date = new Date()): ReturnsResult => {
+  // Только фактические выплаты формируют распределения и денежный поток.
   const byDeal: Record<string, Payout[]> = {};
-  for (const p of payouts) (byDeal[p.deal] ||= []).push(p);
+  for (const p of payouts) {
+    if (p.status === 'planned') continue;
+    (byDeal[p.deal] ||= []).push(p);
+  }
 
   let equityInvested = 0;
   let distributed = 0;

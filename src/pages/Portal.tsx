@@ -18,12 +18,13 @@ import {
   Clock,
   Target,
   LayoutGrid,
+  ChevronLeft,
   ChevronRight,
   Sun,
   Moon,
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { useDeals, Deal, Payout } from '../context/DealContext';
 import { useTheme } from '../context/ThemeContext';
 import { statusColor, cleanLabel, getStageProgress } from '../utils/dealDisplay';
@@ -80,8 +81,13 @@ export const PortfolioPage = () => {
   });
   const currencyState = useCurrencyRates();
   const { deals } = useDeals();
-  const [selectedProjectId, setSelectedProjectId] = useState<string | null>(null);
-  const selectedProject = deals.find(deal => deal.id === selectedProjectId);
+  // Выбранная сделка живёт в URL (?project=id), а не в локальном стейте — иначе клик
+  // по «Главная» (ссылка на «/», уже активную) не сбрасывал бы детальный вид.
+  const [searchParams, setSearchParams] = useSearchParams();
+  const selectedProjectId = searchParams.get('project');
+  const selectedProject = selectedProjectId ? deals.find(deal => deal.id === selectedProjectId) : undefined;
+  const openProject = (id: string) => setSearchParams({ project: id });
+  const closeProject = () => setSearchParams({});
 
   if (selectedProject) {
     return (
@@ -89,7 +95,7 @@ export const PortfolioPage = () => {
         deal={selectedProject}
         forecastConfig={forecastConfig}
         setForecastConfig={setForecastConfig}
-        onBack={() => setSelectedProjectId(null)}
+        onBack={closeProject}
       />
     );
   }
@@ -105,8 +111,8 @@ export const PortfolioPage = () => {
         <SummaryCard forecastConfig={forecastConfig} setForecastConfig={setForecastConfig} currencyState={currencyState} />
         <AssetAllocation />
         <PaymentsCalendar />
-        <ProjectsCards forecastConfig={forecastConfig} onSelectProject={setSelectedProjectId} currencyState={currencyState} setActiveTab={undefined} />
-        <SyndicateEvents />
+        <ProjectsCards forecastConfig={forecastConfig} onSelectProject={openProject} currencyState={currencyState} setActiveTab={undefined} />
+        <PortfolioActivity onSelectProject={openProject} />
         <StatStrip forecastConfig={forecastConfig} />
       </motion.div>
     </AnimatePresence>
@@ -239,22 +245,42 @@ const paymentStyles: Record<PaymentStatus, { dot: string; card: string; text: st
   closing: { dot: 'bg-slate-400', card: 'bg-surface-2 border-line', text: 'text-slate-300' },
 };
 
-// Реальные события календаря: фактические выплаты из коллекции payouts
-// (зелёные «Выплачено») + реальные даты окончания сделок. Без синтетики.
+// Плитка даты и подпись в списке «ближайшие» — по статусу события.
+const PAYMENT_TILE: Record<PaymentStatus, { bg: string; label: string }> = {
+  expected: { bg: 'bg-amber-500', label: 'Ожидается' },
+  paid: { bg: 'bg-[#00a651]', label: 'Выплачено' },
+  overdue: { bg: 'bg-rose-500', label: 'Просрочено' },
+  closing: { bg: 'bg-slate-500', label: 'Окончание сделки' },
+};
+
+// События календаря: фактические выплаты (зелёные «Выплачено»), плановые выплаты
+// графика (жёлтые «Ожидается» / красные «Просрочено» по дате) и реальные даты
+// окончания сделок (серые). Без синтетики — всё из реальных данных.
 const getPaymentEvents = (deals: Deal[], payouts: Payout[]) => {
   const events: PaymentEvent[] = [];
+  const today = getToday();
   const dealName = (id: string) => deals.find(d => d.id === id)?.name || 'Сделка';
 
   payouts.forEach(payout => {
     const date = new Date(payout.date);
     if (Number.isNaN(date.getTime())) return;
+    const kindLabel = PAYOUT_KIND_LABEL[payout.kind] || 'Выплата';
+    let status: PaymentStatus;
+    let title: string;
+    if (payout.status === 'planned') {
+      status = date >= today ? 'expected' : 'overdue';
+      title = date >= today ? `${kindLabel} (план)` : `${kindLabel} — просрочено`;
+    } else {
+      status = 'paid';
+      title = kindLabel;
+    }
     events.push({
       id: `payout-${payout.id}`,
       date,
       dealName: dealName(payout.deal),
       amount: payout.amount,
-      status: 'paid',
-      title: PAYOUT_KIND_LABEL[payout.kind] || 'Выплата',
+      status,
+      title,
     });
   });
 
@@ -308,11 +334,11 @@ const PaymentsCalendar = () => {
 
         <div className="space-y-3">
           {upcoming.length ? upcoming.map(event => {
-            const isClosing = event.status === 'closing';
+            const tile = PAYMENT_TILE[event.status];
             return (
               <div key={event.id} title={`${event.dealName}: ${event.title}`} className="flex justify-between items-center p-3 bg-surface-2 border border-line rounded-2xl transition-all">
                 <div className="flex items-center gap-3 min-w-0">
-                  <div className="w-11 h-11 rounded-xl bg-[#00a651] text-white flex flex-col items-center justify-center shrink-0 leading-tight">
+                  <div className={`w-11 h-11 rounded-xl text-white flex flex-col items-center justify-center shrink-0 leading-tight ${tile.bg}`}>
                     <span className="text-[8px] font-bold uppercase">{event.date.toLocaleDateString('ru-RU', { month: 'short' }).substring(0, 4).toUpperCase().replace('.', '')}</span>
                     <span className="text-sm font-black">{event.date.getDate()}</span>
                   </div>
@@ -322,7 +348,7 @@ const PaymentsCalendar = () => {
                   </div>
                 </div>
                 <span className="text-[9px] font-black uppercase tracking-wider text-slate-400 bg-surface px-2.5 py-1.5 rounded-lg border border-line whitespace-nowrap">
-                  {isClosing ? 'Окончание сделки' : 'Выплата'}
+                  {tile.label}
                 </span>
               </div>
             );
@@ -385,6 +411,7 @@ const PaymentsCalendar = () => {
             <span className="flex items-center gap-1"><i className="w-2 h-2 rounded-full bg-amber-400"></i> Ожидается</span>
             <span className="flex items-center gap-1"><i className="w-2 h-2 rounded-full bg-emerald-500"></i> Выплачено</span>
             <span className="flex items-center gap-1"><i className="w-2 h-2 rounded-full bg-rose-500"></i> Просрочено</span>
+            <span className="flex items-center gap-1"><i className="w-2 h-2 rounded-full bg-slate-400"></i> Окончание</span>
           </div>
         </div>
       )}
@@ -402,15 +429,30 @@ const ProjectsCards = ({ forecastConfig, onSelectProject, currencyState }: {
   const portfolioDeals = getInvestedDeals(deals);
   const { currency, rates } = currencyState;
   const scrollRef = React.useRef<HTMLDivElement>(null);
+  const [canLeft, setCanLeft] = useState(false);
+  const [canRight, setCanRight] = useState(false);
 
-  const scrollRight = () => {
-    if (scrollRef.current) {
-      scrollRef.current.scrollBy({ left: 300, behavior: 'smooth' });
-    }
+  // Пересчёт доступности стрелок по позиции скролла (с запасом в 1px на округления).
+  const updateArrows = React.useCallback(() => {
+    const el = scrollRef.current;
+    if (!el) return;
+    setCanLeft(el.scrollLeft > 1);
+    setCanRight(el.scrollLeft + el.clientWidth < el.scrollWidth - 1);
+  }, []);
+
+  React.useEffect(() => {
+    updateArrows();
+    const onResize = () => updateArrows();
+    window.addEventListener('resize', onResize);
+    return () => window.removeEventListener('resize', onResize);
+  }, [updateArrows, portfolioDeals.length]);
+
+  const scrollBy = (delta: number) => {
+    scrollRef.current?.scrollBy({ left: delta, behavior: 'smooth' });
   };
 
   return (
-    <section className="col-span-12 lg:col-span-8 bg-surface border border-line rounded-3xl shadow-lg shadow-black/30 flex flex-col overflow-hidden relative">
+    <section className="col-span-12 lg:col-span-8 bg-surface border border-line rounded-3xl shadow-lg shadow-black/30 flex flex-col overflow-visible relative">
       <div className="p-6 border-b border-line flex justify-between items-center">
         <div className="flex items-center gap-2">
           <Layers size={18} className="text-slate-500" />
@@ -421,8 +463,9 @@ const ProjectsCards = ({ forecastConfig, onSelectProject, currencyState }: {
 
       {portfolioDeals.length ? (
         <div className="relative flex-1 flex items-center">
-          <div 
+          <div
             ref={scrollRef}
+            onScroll={updateArrows}
             className="flex gap-4 overflow-x-auto p-5 scrollbar-none w-full scroll-smooth"
           >
             {portfolioDeals.map(project => {
@@ -513,16 +556,25 @@ const ProjectsCards = ({ forecastConfig, onSelectProject, currencyState }: {
             })}
           </div>
 
-          {/* Кнопка навигации слайдера */}
-          <button 
-            onClick={(e) => {
-              e.stopPropagation();
-              scrollRight();
-            }}
-            className="absolute right-4 z-10 w-10 h-10 rounded-full bg-surface border border-line text-slate-500 flex items-center justify-center hover:text-emerald-500 hover:border-[#10b981]/50 shadow-xl transition-all"
-          >
-            <ChevronRight size={20} />
-          </button>
+          {/* Стрелки слайдера — вынесены за границы карточки; крайние скрываются. */}
+          {canLeft && (
+            <button
+              onClick={(e) => { e.stopPropagation(); scrollBy(-300); }}
+              title="Прокрутить влево"
+              className="absolute -left-5 top-1/2 -translate-y-1/2 z-20 w-10 h-10 rounded-full bg-surface border border-line text-slate-500 flex items-center justify-center hover:text-emerald-500 hover:border-[#10b981]/50 shadow-xl transition-all"
+            >
+              <ChevronLeft size={20} />
+            </button>
+          )}
+          {canRight && (
+            <button
+              onClick={(e) => { e.stopPropagation(); scrollBy(300); }}
+              title="Прокрутить вправо"
+              className="absolute -right-5 top-1/2 -translate-y-1/2 z-20 w-10 h-10 rounded-full bg-surface border border-line text-slate-500 flex items-center justify-center hover:text-emerald-500 hover:border-[#10b981]/50 shadow-xl transition-all"
+            >
+              <ChevronRight size={20} />
+            </button>
+          )}
         </div>
       ) : (
         <div className="flex-1 flex flex-col items-center justify-center gap-4 p-12 text-center">
@@ -578,20 +630,86 @@ const buildProjectHistory = (deal: Deal) => {
     .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
 };
 
-// Лента событий синдиката — собрана из реального statusHistory всех сделок
-const SyndicateEvents = () => {
-  const { deals } = useDeals();
+// Единая лента активности портфеля: смены статусов + фактические выплаты +
+// приближающиеся/прошедшие окончания сделок. Собрана из реальных данных.
+type ActivityKind = 'status' | 'payout' | 'closing';
+
+interface ActivityItem {
+  id: string;
+  dealId: string;
+  dealName: string;
+  date: string;
+  kind: ActivityKind;
+  title: string;
+  comment?: string;
+  amount?: number;
+  upcoming?: boolean;
+}
+
+const ACTIVITY_TONE: Record<ActivityKind, string> = {
+  status: 'text-[#10b981] bg-[#10b981]',
+  payout: 'text-[#10b981] bg-[#10b981]',
+  closing: 'text-slate-400 bg-slate-400',
+};
+
+const buildPortfolioActivity = (deals: Deal[], payouts: Payout[]): ActivityItem[] => {
+  const now = getToday();
+  const horizon = new Date(now);
+  horizon.setDate(horizon.getDate() + 90); // окончания в пределах 90 дней считаем «приближающимися»
+  const dealName = (id: string) => deals.find(d => d.id === id)?.name || 'Сделка';
+  const items: ActivityItem[] = [];
+
+  deals.forEach(deal => {
+    (deal.statusHistory || []).forEach(item => {
+      items.push({
+        id: item.id || `${deal.id}-${item.date}`,
+        dealId: deal.id,
+        dealName: deal.name,
+        date: item.date,
+        kind: 'status',
+        title: cleanLabel(item.status),
+        comment: item.comment,
+      });
+    });
+
+    if (deal.termDate) {
+      const end = new Date(deal.termDate);
+      if (!Number.isNaN(end.getTime()) && end <= horizon) {
+        const upcoming = end >= now;
+        items.push({
+          id: `${deal.id}-end`,
+          dealId: deal.id,
+          dealName: deal.name,
+          date: deal.termDate,
+          kind: 'closing',
+          title: upcoming ? 'Скоро окончание сделки' : 'Сделка завершена',
+          upcoming,
+        });
+      }
+    }
+  });
+
+  // Только фактические выплаты (плановые в ленту активности не попадают).
+  payouts.filter(p => p.status !== 'planned').forEach(p => {
+    items.push({
+      id: `payout-${p.id}`,
+      dealId: p.deal,
+      dealName: dealName(p.deal),
+      date: p.date,
+      kind: 'payout',
+      title: PAYOUT_KIND_LABEL[p.kind] || 'Выплата',
+      amount: p.amount,
+    });
+  });
+
+  return items.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+};
+
+const PortfolioActivity = ({ onSelectProject }: { onSelectProject: (id: string) => void }) => {
+  const { deals, payouts } = useDeals();
   const [showAll, setShowAll] = useState(false);
-  const allEvents = deals
-    .flatMap(deal => (deal.statusHistory || []).map(item => ({
-      id: item.id || `${deal.id}-${item.date}`,
-      dealName: deal.name,
-      status: item.status,
-      date: item.date,
-      comment: item.comment,
-    })))
-    .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
-  const dbEvents = showAll ? allEvents : allEvents.slice(0, 8);
+  const allEvents = buildPortfolioActivity(deals, payouts);
+  const visible = showAll ? allEvents : allEvents.slice(0, 8);
 
   const formatEventDate = (iso: string) => {
     const d = new Date(iso);
@@ -611,27 +729,39 @@ const SyndicateEvents = () => {
         </div>
 
         <div className="space-y-4">
-          {dbEvents.length === 0 ? (
+          {visible.length === 0 ? (
             <p className="text-xs text-slate-500 font-medium py-6 text-center">
-              Событий пока нет. Они появляются при смене статусов сделок.
+              Событий пока нет. Они появляются при смене статусов, выплатах и приближении сроков сделок.
             </p>
           ) : (
-            dbEvents.map(event => (
-              <div key={event.id} className="relative pl-5 pb-1 border-l border-line last:border-0 last:pb-0">
-                <span className="absolute -left-[5px] top-1.5 w-2.5 h-2.5 rounded-full text-[#10b981] bg-[#10b981] shadow-[0_0_6px_currentColor]"></span>
+            visible.map(event => {
+              const tone = event.kind === 'closing' && event.upcoming
+                ? 'text-amber-400 bg-amber-400'
+                : ACTIVITY_TONE[event.kind];
+              return (
+                <button
+                  key={event.id}
+                  type="button"
+                  onClick={() => onSelectProject(event.dealId)}
+                  className="w-full text-left relative pl-5 pb-1 border-l border-line last:border-0 last:pb-0 group cursor-pointer"
+                >
+                  <span className={`absolute -left-[5px] top-1.5 w-2.5 h-2.5 rounded-full shadow-[0_0_6px_currentColor] ${tone}`}></span>
 
-                <div className="flex justify-between items-start mb-0.5">
-                  <span className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">{cleanLabel(event.status)}</span>
-                  <span className="text-[10px] text-slate-500 font-medium">{formatEventDate(event.date)}</span>
-                </div>
+                  <div className="flex justify-between items-start mb-0.5 gap-2">
+                    <span className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">{event.title}</span>
+                    <span className="text-[10px] text-slate-500 font-medium shrink-0">{formatEventDate(event.date)}</span>
+                  </div>
 
-                <p className="text-xs font-bold text-slate-100 mt-1 leading-tight">{event.dealName}</p>
+                  <p className="text-xs font-bold text-slate-100 mt-1 leading-tight group-hover:text-[#10b981] transition-colors">{event.dealName}</p>
 
-                {event.comment && (
-                  <p className="text-xs text-slate-400 mt-1 leading-relaxed">{event.comment}</p>
-                )}
-              </div>
-            ))
+                  {event.kind === 'payout' && event.amount !== undefined ? (
+                    <p className="text-xs font-bold text-[#10b981] font-mono mt-1">+{formatRub(event.amount)}</p>
+                  ) : event.comment ? (
+                    <p className="text-xs text-slate-400 mt-1 leading-relaxed">{event.comment}</p>
+                  ) : null}
+                </button>
+              );
+            })
           )}
         </div>
       </div>

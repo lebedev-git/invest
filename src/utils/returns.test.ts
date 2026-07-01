@@ -10,7 +10,7 @@ const baseDeal = (over: Partial<Deal>): Deal => ({
 }) as Deal;
 
 const payout = (over: Partial<Payout>): Payout => ({
-  id: 'p', deal: '1', date: '2025-01-01', amount: 0, kind: 'dividend', ...over,
+  id: 'p', deal: '1', date: '2025-01-01', amount: 0, kind: 'dividend', status: 'paid', ...over,
 });
 
 describe('xirr', () => {

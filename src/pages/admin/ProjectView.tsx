@@ -20,7 +20,7 @@ import {
   Wallet,
   Plus,
 } from 'lucide-react';
-import { Deal, Payout, PayoutKind, useDeals } from '../../context/DealContext';
+import { Deal, Payout, PayoutKind, PayoutStatus, useDeals } from '../../context/DealContext';
 import { statusColor } from '../../utils/dealDisplay';
 import { money, formatMoic } from '../../utils/format';
 import { computeDealReturns } from '../../utils/returns';
@@ -490,11 +490,14 @@ function PayoutsCard({ dealId, payouts, onAdd, onDelete }: {
   const [date, setDate] = useState('');
   const [amount, setAmount] = useState('');
   const [kind, setKind] = useState<PayoutKind>('dividend');
+  const [status, setStatus] = useState<PayoutStatus>('paid');
   const [comment, setComment] = useState('');
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
 
-  const total = payouts.reduce((sum, p) => sum + p.amount, 0);
+  // «Всего выплачено» — только фактические выплаты; плановые считаем отдельно.
+  const total = payouts.filter(p => p.status === 'paid').reduce((sum, p) => sum + p.amount, 0);
+  const plannedTotal = payouts.filter(p => p.status === 'planned').reduce((sum, p) => sum + p.amount, 0);
 
   const handleAdd = async () => {
     setError('');
@@ -505,8 +508,8 @@ function PayoutsCard({ dealId, payouts, onAdd, onDelete }: {
     }
     setBusy(true);
     try {
-      await onAdd({ deal: dealId, date, amount: value, kind, comment: comment.trim() });
-      setDate(''); setAmount(''); setComment(''); setKind('dividend');
+      await onAdd({ deal: dealId, date, amount: value, kind, status, comment: comment.trim() });
+      setDate(''); setAmount(''); setComment(''); setKind('dividend'); setStatus('paid');
     } catch {
       setError('Не удалось сохранить выплату.');
     } finally {
@@ -518,28 +521,38 @@ function PayoutsCard({ dealId, payouts, onAdd, onDelete }: {
     <Card icon={Wallet} title="Выплаты">
       {payouts.length > 0 ? (
         <div className="divide-y divide-line mb-4">
-          {payouts.map(p => (
-            <div key={p.id} className="flex items-center justify-between gap-3 py-3 first:pt-0">
-              <div className="min-w-0">
-                <div className="flex items-center gap-2">
-                  <span className="text-sm font-bold text-emerald-600 font-mono">{money(p.amount)}</span>
-                  <span className="text-[9px] font-black uppercase tracking-wider text-slate-400 bg-surface-2 border border-line rounded px-1.5 py-0.5">{PAYOUT_KIND_LABELS[p.kind]}</span>
+          {payouts.map(p => {
+            const planned = p.status === 'planned';
+            return (
+              <div key={p.id} className="flex items-center justify-between gap-3 py-3 first:pt-0">
+                <div className="min-w-0">
+                  <div className="flex items-center gap-2">
+                    <span className={`text-sm font-bold font-mono ${planned ? 'text-slate-400' : 'text-emerald-600'}`}>{money(p.amount)}</span>
+                    <span className="text-[9px] font-black uppercase tracking-wider text-slate-400 bg-surface-2 border border-line rounded px-1.5 py-0.5">{PAYOUT_KIND_LABELS[p.kind]}</span>
+                    {planned && <span className="text-[9px] font-black uppercase tracking-wider text-amber-500 bg-amber-500/10 border border-amber-500/20 rounded px-1.5 py-0.5">План</span>}
+                  </div>
+                  <p className="text-[11px] text-slate-500 mt-0.5">{formatDate(p.date)}{p.comment ? ` · ${p.comment}` : ''}</p>
                 </div>
-                <p className="text-[11px] text-slate-500 mt-0.5">{formatDate(p.date)}{p.comment ? ` · ${p.comment}` : ''}</p>
+                <button
+                  onClick={() => onDelete(p.id)}
+                  title="Удалить"
+                  className="w-8 h-8 rounded-lg bg-surface-2 border border-line text-slate-400 hover:text-rose-400 hover:border-rose-500/50 transition-all flex items-center justify-center shrink-0"
+                >
+                  <Trash2 size={14} />
+                </button>
               </div>
-              <button
-                onClick={() => onDelete(p.id)}
-                title="Удалить"
-                className="w-8 h-8 rounded-lg bg-surface-2 border border-line text-slate-400 hover:text-rose-400 hover:border-rose-500/50 transition-all flex items-center justify-center shrink-0"
-              >
-                <Trash2 size={14} />
-              </button>
-            </div>
-          ))}
+            );
+          })}
           <div className="flex justify-between items-center pt-3">
             <span className="text-[10px] font-black uppercase tracking-widest text-slate-400">Всего выплачено</span>
             <span className="text-sm font-black text-slate-100 font-mono">{money(total)}</span>
           </div>
+          {plannedTotal > 0 && (
+            <div className="flex justify-between items-center pt-2">
+              <span className="text-[10px] font-black uppercase tracking-widest text-amber-500">Запланировано</span>
+              <span className="text-sm font-black text-amber-500 font-mono">{money(plannedTotal)}</span>
+            </div>
+          )}
         </div>
       ) : (
         <EmptyState text="Выплат пока нет. Добавьте фактические выплаты — они появятся в портфеле и реестре инвестора." />
@@ -558,12 +571,25 @@ function PayoutsCard({ dealId, payouts, onAdd, onDelete }: {
           </select>
           <input type="text" value={comment} onChange={e => setComment(e.target.value)} placeholder="Комментарий" className="field" />
         </div>
+        {/* Факт (учитывается в суммах и доходности) / План (только календарь-прогноз). */}
+        <div className="flex rounded-xl bg-surface-2 border border-line p-0.5">
+          {([['paid', 'Факт'], ['planned', 'План']] as [PayoutStatus, string][]).map(([value, label]) => (
+            <button
+              key={value}
+              type="button"
+              onClick={() => setStatus(value)}
+              className={`flex-1 py-2 rounded-lg text-[10px] font-black uppercase tracking-widest transition-colors cursor-pointer ${status === value ? (value === 'planned' ? 'bg-amber-500 text-white' : 'bg-emerald-500 text-white') : 'text-slate-400 hover:text-slate-100'}`}
+            >
+              {label}
+            </button>
+          ))}
+        </div>
         <button
           onClick={handleAdd}
           disabled={busy}
           className="w-full py-3 rounded-xl bg-emerald-500 text-white text-[10px] font-black uppercase tracking-widest hover:bg-emerald-400 transition-all flex items-center justify-center gap-2 disabled:opacity-60"
         >
-          {busy ? <Loader2 size={14} className="animate-spin" /> : <Plus size={14} />} Добавить выплату
+          {busy ? <Loader2 size={14} className="animate-spin" /> : <Plus size={14} />} {status === 'planned' ? 'Добавить в план' : 'Добавить выплату'}
         </button>
         {error && <p className="text-[11px] text-rose-400 font-bold text-center">{error}</p>}
       </div>
