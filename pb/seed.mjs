@@ -31,8 +31,6 @@ async function main() {
     return;
   }
 
-  const investor = await pb.collection('users').getFirstListItem('email="investor@x7.local"');
-
   for (let i = 0; i < INITIAL_DEALS.length; i++) {
     const { id, statusHistory, ...rest } = INITIAL_DEALS[i];
     const rec = await pb.collection('deals').create({
@@ -49,16 +47,7 @@ async function main() {
       await pb.collection('status_history').create({ deal: rec.id, status: h.status, comment: h.comment || '' });
     }
 
-    // Демонстрация изоляции: инвестор привязан к первым двум сделкам.
-    if (i < 2) {
-      await pb.collection('deal_investors').create({
-        deal: rec.id,
-        investor: investor.id,
-        amount: rest.invested || 0,
-        share: rest.share || 0,
-      });
-    }
-    console.log(`+ ${rest.name}${i < 2 ? '  (инвестор привязан)' : ''}`);
+    console.log(`+ ${rest.name}`);
   }
   console.log('Сид завершён.');
 }
