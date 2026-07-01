@@ -91,7 +91,9 @@ export const AnalyticsPage = () => {
 
   // Структура портфеля по типам и по городам.
   const byType = buildBreakdown(portfolioDeals, deal => cleanLabel(deal.type), totalInvested);
-  const byCityFull = buildBreakdown(portfolioDeals, deal => cleanLabel(deal.city) || 'Не указан', totalInvested);
+  // Города с долей, округляющейся до 0%, не показываем — «0%» в списке бесполезен.
+  const byCityFull = buildBreakdown(portfolioDeals, deal => cleanLabel(deal.city) || 'Не указан', totalInvested)
+    .filter(item => Math.round(item.percent) > 0);
   // География: топ-6 городов + агрегат «Прочие», чтобы список не разрастался.
   const byCity = byCityFull.length > 6
     ? [

@@ -64,17 +64,20 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   // Саморегистрация с подтверждением по почте (OTP включён в коллекции users).
-  // 1) создаём пользователя (роль committee = полный доступ в режиме «одна сущность»),
+  // 1) создаём пользователя,
   // 2) запрашиваем одноразовый код — PocketBase шлёт его на email,
   // 3) возвращаем otpId; ввод кода завершается в confirmOtp → authWithOTP.
+  //
+  // Роль клиентом НЕ задаётся: доступ определяется владением (created_by), а не ролью
+  // (см. миграции single_entity_open_signup / owner_scope). emailVisibility=false —
+  // почта не отдаётся в выборках (list/view ограничены собственным профилем, фаза 5).
   const signUp = useCallback(async (email: string, password: string, fullName?: string): Promise<string> => {
     const mail = email.trim();
     await pb.collection('users').create({
       email: mail,
       password,
       passwordConfirm: password,
-      emailVisibility: true,
-      role: 'committee',
+      emailVisibility: false,
       full_name: (fullName || '').trim(),
     });
     const otp = await pb.collection('users').requestOTP(mail);

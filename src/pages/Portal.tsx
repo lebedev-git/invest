@@ -9,7 +9,6 @@ import {
   Calendar,
   Layers,
   ArrowUpRight,
-  Info,
   Activity,
   ArrowLeft,
   Plus,
@@ -27,7 +26,7 @@ import { motion, AnimatePresence } from 'motion/react';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { useDeals, Deal, Payout } from '../context/DealContext';
 import { useTheme } from '../context/ThemeContext';
-import { statusColor, cleanLabel, getStageProgress } from '../utils/dealDisplay';
+import { statusColor, cleanLabel } from '../utils/dealDisplay';
 
 // Переключатель тем оформления (Солнце / Луна)
 export const ThemeToggle = ({ compact }: { compact?: boolean }) => {
@@ -58,7 +57,6 @@ import { computeDealReturns } from '../utils/returns';
 import {
   PROJECT_IMAGE_PLACEHOLDER,
   getStatusBadgeStyle,
-  getProgressBarColor,
   ALLOCATION_STYLES,
   formatCurrency,
   useCurrencyRates,
@@ -199,7 +197,6 @@ const AssetAllocation = () => {
           <h3 className="font-bold text-sm text-slate-100 flex items-center gap-2">
             <LayoutGrid size={16} className="text-slate-500" /> Распределение активов
           </h3>
-          <Info size={14} className="text-slate-600 cursor-help" />
         </div>
         {allocation.length ? (
           <div className="grid grid-cols-2 gap-3">
@@ -474,12 +471,10 @@ const ProjectsCards = ({ forecastConfig, onSelectProject, currencyState }: {
               const projectedPercent = capital ? (projectedIncome / capital) * 100 : 0;
               const dealReturns = computeDealReturns(project, payouts.filter(p => p.deal === project.id));
               const paybackYears = getPaybackYears(project);
-              const progress = getStageProgress(String(project.status));
               const image = project.images?.length
                 ? fileUrl(project.id, project.images[0], '400x300')
                 : PROJECT_IMAGE_PLACEHOLDER;
               const badgeStyle = getStatusBadgeStyle(project.status);
-              const progressBarColor = getProgressBarColor(progress);
 
               return (
                 <div
@@ -539,14 +534,7 @@ const ProjectsCards = ({ forecastConfig, onSelectProject, currencyState }: {
                     </div>
 
                     <div className="mt-auto pt-2">
-                      <div className="flex items-center gap-3">
-                        <div className="flex-1 h-1.5 rounded-full bg-surface-2 overflow-hidden">
-                          <div className={`h-full rounded-full ${progressBarColor}`} style={{ width: `${progress}%` }}></div>
-                        </div>
-                        <span className="text-xs font-bold text-slate-300">{progress}%</span>
-                      </div>
-                      
-                      <button onClick={(e) => { e.stopPropagation(); onSelectProject(project.id); }} className="w-full mt-4 py-2 rounded-xl bg-surface-2 border border-line text-[10px] font-black uppercase tracking-widest text-slate-400 group-hover:bg-[#10b981] group-hover:text-white group-hover:border-[#10b981] transition-all cursor-pointer">
+                      <button onClick={(e) => { e.stopPropagation(); onSelectProject(project.id); }} className="w-full py-2 rounded-xl bg-surface-2 border border-line text-[10px] font-black uppercase tracking-widest text-slate-400 group-hover:bg-[#10b981] group-hover:text-white group-hover:border-[#10b981] transition-all cursor-pointer">
                         Подробнее
                       </button>
                     </div>
@@ -728,7 +716,7 @@ const PortfolioActivity = ({ onSelectProject }: { onSelectProject: (id: string) 
           <span className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">{allEvents.length}</span>
         </div>
 
-        <div className="space-y-4">
+        <div className={`space-y-4 ${showAll ? 'max-h-[420px] overflow-y-auto pr-1 scrollbar-none' : ''}`}>
           {visible.length === 0 ? (
             <p className="text-xs text-slate-500 font-medium py-6 text-center">
               Событий пока нет. Они появляются при смене статусов, выплатах и приближении сроков сделок.
