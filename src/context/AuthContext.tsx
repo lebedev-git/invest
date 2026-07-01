@@ -79,6 +79,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       passwordConfirm: password,
       emailVisibility: false,
       full_name: (fullName || '').trim(),
+      role: 'investor',
     });
     const otp = await pb.collection('users').requestOTP(mail);
     return otp.otpId;
