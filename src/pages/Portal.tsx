@@ -247,7 +247,7 @@ const PAYMENT_TILE: Record<PaymentStatus, { bg: string; label: string }> = {
   expected: { bg: 'bg-amber-500', label: 'Ожидается' },
   paid: { bg: 'bg-[#00a651]', label: 'Выплачено' },
   overdue: { bg: 'bg-rose-500', label: 'Просрочено' },
-  closing: { bg: 'bg-slate-500', label: 'Окончание сделки' },
+  closing: { bg: 'bg-slate-500', label: 'Окончание' },
 };
 
 // События календаря: фактические выплаты (зелёные «Выплачено»), плановые выплаты
@@ -333,18 +333,18 @@ const PaymentsCalendar = () => {
           {upcoming.length ? upcoming.map(event => {
             const tile = PAYMENT_TILE[event.status];
             return (
-              <div key={event.id} title={`${event.dealName}: ${event.title}`} className="flex justify-between items-center p-3 bg-surface-2 border border-line rounded-2xl transition-all">
-                <div className="flex items-center gap-3 min-w-0">
+              <div key={event.id} title={`${event.dealName}: ${event.title}`} className="flex justify-between items-center gap-2 p-3 bg-surface-2 border border-line rounded-2xl transition-all">
+                <div className="flex items-center gap-3 min-w-0 flex-1">
                   <div className={`w-11 h-11 rounded-xl text-white flex flex-col items-center justify-center shrink-0 leading-tight ${tile.bg}`}>
                     <span className="text-[8px] font-bold uppercase">{event.date.toLocaleDateString('ru-RU', { month: 'short' }).substring(0, 4).toUpperCase().replace('.', '')}</span>
                     <span className="text-sm font-black">{event.date.getDate()}</span>
                   </div>
                   <div className="min-w-0">
-                    <p className="text-xs font-bold text-slate-100">{event.title}</p>
+                    <p className="text-xs font-bold text-slate-100 truncate">{event.title}</p>
                     <p className="text-[10px] text-slate-400 truncate mt-0.5">{event.dealName}</p>
                   </div>
                 </div>
-                <span className="text-[9px] font-black uppercase tracking-wider text-slate-400 bg-surface px-2.5 py-1.5 rounded-lg border border-line whitespace-nowrap">
+                <span className="shrink-0 text-[9px] font-black uppercase tracking-wider text-slate-400 bg-surface px-2.5 py-1.5 rounded-lg border border-line whitespace-nowrap">
                   {tile.label}
                 </span>
               </div>
