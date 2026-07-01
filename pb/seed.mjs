@@ -3,6 +3,12 @@
 import PocketBase from 'pocketbase';
 
 const PB_URL = process.env.VITE_PB_URL || 'http://127.0.0.1:8090';
+const ADMIN_EMAIL = process.env.PB_ADMIN_EMAIL || 'admin@x7.local';
+const ADMIN_PASSWORD = process.env.PB_ADMIN_PASSWORD;
+if (!ADMIN_PASSWORD) {
+  console.error('Укажите пароль суперюзера в переменной окружения PB_ADMIN_PASSWORD.');
+  process.exit(1);
+}
 const pb = new PocketBase(PB_URL);
 
 const INITIAL_DEALS = [
@@ -17,7 +23,7 @@ const INITIAL_DEALS = [
 ];
 
 async function main() {
-  await pb.collection('_superusers').authWithPassword('admin@x7.local', 'ChangeMe123456');
+  await pb.collection('_superusers').authWithPassword(ADMIN_EMAIL, ADMIN_PASSWORD);
 
   const existing = await pb.collection('deals').getFullList();
   if (existing.length) {
